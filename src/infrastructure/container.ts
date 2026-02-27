@@ -1,6 +1,8 @@
 import type { ConsultaRepository, PacienteRepository } from "@/src/application/ports";
 import { ConsultaRepositoryJson } from "./repositories/ConsultaRepositoryJson";
 import { PacienteRepositoryJson } from "./repositories/PacienteRepositoryJson";
+import { ConsultaRepositorySupabase } from "./repositories/ConsultaRepositorySupabase";
+import { PacienteRepositorySupabase } from "./repositories/PacienteRepositorySupabase";
 import { createIdentificarPaciente } from "@/src/application/use-cases/IdentificarPaciente";
 import { createIniciarNovaConsulta } from "@/src/application/use-cases/IniciarNovaConsulta";
 import { createSalvarFormularioClinico } from "@/src/application/use-cases/SalvarFormularioClinico";
@@ -9,16 +11,22 @@ import { createSalvarImpressaoClinica } from "@/src/application/use-cases/Salvar
 import { createCalcularResultadoCompleto } from "@/src/application/use-cases/CalcularResultadoCompleto";
 import { createListarHistoricoPaciente } from "@/src/application/use-cases/ListarHistoricoPaciente";
 
+const useSupabase = process.env.PERSISTENCE === "supabase";
+
 let consultaRepo: ConsultaRepository | null = null;
 let pacienteRepo: PacienteRepository | null = null;
 
 function getConsultaRepository(): ConsultaRepository {
-  if (!consultaRepo) consultaRepo = new ConsultaRepositoryJson();
+  if (!consultaRepo) {
+    consultaRepo = useSupabase ? new ConsultaRepositorySupabase() : new ConsultaRepositoryJson();
+  }
   return consultaRepo;
 }
 
 function getPacienteRepository(): PacienteRepository {
-  if (!pacienteRepo) pacienteRepo = new PacienteRepositoryJson();
+  if (!pacienteRepo) {
+    pacienteRepo = useSupabase ? new PacienteRepositorySupabase() : new PacienteRepositoryJson();
+  }
   return pacienteRepo;
 }
 

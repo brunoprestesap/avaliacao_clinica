@@ -23,34 +23,29 @@ export default async function ClinicoPage({
   const valoresIniciais = consulta.clinico?.itens;
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-2xl">
+    <div className="page-container bg-[var(--background)]">
+      <div className="content-width-medium flex flex-col gap-6">
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-800" role="alert">
+          <div className="alert-error" role="alert">
             {safeDecodeError(error)}
           </div>
         )}
-        <Link
-          href="/"
-          className="mb-6 inline-block text-slate-600 underline hover:text-slate-800"
-        >
-          Voltar ao início
+        <Link href="/" className="link-back">
+          <span aria-hidden>←</span> Voltar ao início
         </Link>
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <h1 className="mb-6 text-2xl font-semibold text-slate-800">
+        <div className="card">
+          <h1 className="mb-4 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
             2. Formulário – Avaliação clínica
           </h1>
-          <p className="mb-4 text-slate-600">{INSTRUCAO_CLINICA}</p>
-          <p className="mb-6 text-sm text-slate-500">
-            Escala: 0 = Não aconteceu · 1 = Aconteceu poucos dias · 2 = Aconteceu mais da metade dos dias · 3 = Aconteceu quase todos os dias ou com intensidade importante
+          <p className="mb-3 text-[var(--muted)] sm:text-base">{INSTRUCAO_CLINICA}</p>
+          <p className="mb-6 text-sm text-[var(--muted)]">
+            Escala: 0 = Não aconteceu · 1 = Aconteceu poucos dias · 2 = Aconteceu mais da metade
+            dos dias · 3 = Aconteceu quase todos os dias ou com intensidade importante
           </p>
           <form action={salvarClinicoForm} className="space-y-6">
             <input type="hidden" name="consultaId" value={consultaId} />
             <FormularioClinico valoresIniciais={valoresIniciais} />
-            <button
-              type="submit"
-              className="h-14 w-full rounded-xl bg-slate-800 text-lg font-medium text-white transition-colors hover:bg-slate-700 active:bg-slate-900"
-            >
+            <button type="submit" className="btn-primary h-14 w-full rounded-xl text-lg">
               Continuar para Pilares Estruturais
             </button>
           </form>

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getCalcularResultadoCompleto } from "@/src/infrastructure/container";
 import { ResultadoRadares } from "../../../components/ResultadoRadares";
 
-/** Rótulos alinhados à planilha (Score Ansiedade/depressão; Moderado - alto) */
 const CLASSIFICACAO_CLINICA_LABELS: Record<string, string> = {
   CLINICO_ESTAVEL: "Estável",
   CLINICO_LEVE: "Leve",
@@ -11,7 +10,6 @@ const CLASSIFICACAO_CLINICA_LABELS: Record<string, string> = {
   CLINICO_GRAVE: "Grave",
 };
 
-/** Rótulos alinhados à planilha (Estrutura comprometida/instável/funcional/Alta organização) */
 const CLASSIFICACAO_ESTRUTURA_LABELS: Record<string, string> = {
   ESTRUTURA_COMPROMETIDA: "Estrutura comprometida",
   ESTRUTURA_INSTAVEL: "Estrutura instável",
@@ -49,98 +47,105 @@ export default async function ResultadoPage({
   const comp = consulta.comparacao;
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div className="mb-6 flex flex-wrap gap-4">
-          <Link href="/" className="text-slate-600 underline hover:text-slate-800">
-            Voltar ao início
+    <div className="page-container bg-[var(--background)]">
+      <div className="content-width-wide flex flex-col gap-6">
+        <nav className="flex flex-wrap items-center gap-3 gap-y-2 sm:gap-4" aria-label="Navegação">
+          <Link href="/" className="link-back">
+            <span aria-hidden>←</span> Voltar ao início
           </Link>
+          <span className="text-[var(--muted)]" aria-hidden>·</span>
           <Link
             href={`/avaliacao/historico/${consulta.patient_id}`}
-            className="text-slate-600 underline hover:text-slate-800"
+            className="link-back"
           >
             Ver histórico do paciente
           </Link>
-        </div>
+        </nav>
 
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <h1 className="mb-8 text-2xl font-semibold text-slate-800">
+        <div className="card space-y-8">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
             5. Resultado da avaliação
           </h1>
 
           {c.alerta_ideacao && (
             <div
-              className="mb-8 rounded-xl border-2 border-red-600 bg-red-50 p-6 text-center"
+              className="rounded-xl border-2 border-red-600 bg-[var(--error-bg)] p-5 text-center sm:p-6"
               role="alert"
               aria-live="assertive"
             >
-              <p className="text-xl font-bold text-red-800">Alerta: ideação suicida</p>
-              <p className="mt-2 text-red-700">
+              <p className="text-lg font-bold text-[var(--error-text)] sm:text-xl">
+                Alerta: ideação suicida
+              </p>
+              <p className="mt-2 text-sm text-[var(--error-text)]/90 sm:text-base">
                 Item C14 (Ideação suicida) com pontuação ≥ 2. Atenção necessária.
               </p>
             </div>
           )}
 
-          <section className="mb-8 grid gap-6 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-6">
-              <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">
+          <section className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-5 sm:p-6">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
                 Score clínico
               </h2>
-              <p className="text-3xl font-bold text-slate-800">{c.score_total}</p>
-              <p className="mt-1 text-slate-600">
+              <p className="text-3xl font-bold text-[var(--foreground)] sm:text-4xl">{c.score_total}</p>
+              <p className="mt-1 text-[var(--muted)]">
                 {CLASSIFICACAO_CLINICA_LABELS[c.classificacao] ?? c.classificacao}
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-6">
-              <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">
+            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-5 sm:p-6">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
                 Média estrutural
               </h2>
-              <p className="text-3xl font-bold text-slate-800">{e.media.toFixed(2)}</p>
-              <p className="mt-1 text-slate-600">
+              <p className="text-3xl font-bold text-[var(--foreground)] sm:text-4xl">
+                {e.media.toFixed(2)}
+              </p>
+              <p className="mt-1 text-[var(--muted)]">
                 {CLASSIFICACAO_ESTRUTURA_LABELS[e.classificacao] ?? e.classificacao}
               </p>
             </div>
           </section>
 
-          <section className="mb-8">
-            <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
               FASE indicada
             </h2>
-            <p className="text-2xl font-bold text-slate-800">Fase {consulta.fase_indicada}</p>
+            <p className="text-2xl font-bold text-[var(--foreground)] sm:text-3xl">
+              Fase {consulta.fase_indicada}
+            </p>
           </section>
 
           {comp && (
-            <section className="mb-8 rounded-xl border border-slate-200 bg-slate-50/50 p-6">
-              <h2 className="mb-4 text-lg font-semibold text-slate-800">
+            <section className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-5 sm:p-6">
+              <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)]">
                 Comparação com última consulta
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <p className="text-sm text-slate-600">Clínico (delta: {comp.delta_clinico})</p>
-                  <p className="font-medium text-slate-800">
+                  <p className="text-sm text-[var(--muted)]">Clínico (delta: {comp.delta_clinico})</p>
+                  <p className="font-medium text-[var(--foreground)]">
                     {VARIACAO_LABELS[comp.variacao_clinica] ?? comp.variacao_clinica}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-[var(--muted)]">
                     Estrutura (delta: {comp.delta_estrutura.toFixed(2)})
                   </p>
-                  <p className="font-medium text-slate-800">
+                  <p className="font-medium text-[var(--foreground)]">
                     {VARIACAO_LABELS[comp.variacao_estrutura] ?? comp.variacao_estrutura}
                   </p>
                 </div>
                 {comp.pilar_maior_melhora && (
                   <div>
-                    <p className="text-sm text-slate-600">Pilar com maior melhora</p>
-                    <p className="font-medium text-slate-800">
+                    <p className="text-sm text-[var(--muted)]">Pilar com maior melhora</p>
+                    <p className="font-medium text-[var(--foreground)]">
                       {comp.pilar_maior_melhora.label} (+{comp.pilar_maior_melhora.delta})
                     </p>
                   </div>
                 )}
                 {comp.pilar_maior_piora && (
                   <div>
-                    <p className="text-sm text-slate-600">Pilar com maior piora</p>
-                    <p className="font-medium text-slate-800">
+                    <p className="text-sm text-[var(--muted)]">Pilar com maior piora</p>
+                    <p className="font-medium text-[var(--foreground)]">
                       {comp.pilar_maior_piora.label} ({comp.pilar_maior_piora.delta})
                     </p>
                   </div>
@@ -149,11 +154,11 @@ export default async function ResultadoPage({
             </section>
           )}
 
-          <section className="mb-8">
-            <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
               Impressão clínica
             </h2>
-            <p className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-slate-700">
+            <p className="whitespace-pre-wrap rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-4 text-[var(--foreground)]">
               {consulta.impressao_clinica}
             </p>
           </section>

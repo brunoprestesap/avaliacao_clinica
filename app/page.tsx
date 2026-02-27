@@ -6,36 +6,39 @@ export default async function Home() {
   const pacientes = await repo.listarTodos();
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <main className="mx-auto max-w-md">
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <h1 className="mb-2 text-2xl font-semibold text-slate-800">
+    <div className="page-container bg-[var(--background)]">
+      <main className="content-width-narrow flex flex-col gap-6 sm:gap-8">
+        <div className="card">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
             Avaliação Clínica Estrutural
           </h1>
-          <p className="mb-8 text-slate-600">
+          <p className="mb-8 text-[var(--muted)] sm:text-lg">
             Sistema interno – uso durante consulta médica.
           </p>
           <Link
             href="/avaliacao/nova"
-            className="flex h-14 w-full items-center justify-center rounded-xl bg-slate-800 text-lg font-medium text-white transition-colors hover:bg-slate-700 active:bg-slate-900"
+            className="btn-primary flex h-14 w-full items-center justify-center rounded-xl text-lg"
           >
             Nova avaliação
           </Link>
         </div>
+
         {pacientes.length > 0 && (
-          <div className="mt-6 rounded-2xl bg-white p-8 shadow-lg">
-            <h2 className="mb-4 text-lg font-semibold text-slate-800">
+          <div className="card">
+            <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)] sm:text-xl">
               Histórico por paciente
             </h2>
-            <ul className="space-y-3">
+            <ul className="grid gap-3 sm:grid-cols-1">
               {pacientes.map((p) => (
                 <li key={p.id}>
                   <Link
                     href={`/avaliacao/historico/${p.id}`}
-                    className="block rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-100"
+                    className="block rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-4 transition-colors hover:border-[var(--primary)]/30 hover:bg-[var(--muted-bg)]/80 active:bg-[var(--card-border)]/50 sm:p-5"
                   >
-                    <span className="font-medium text-slate-800">{p.nome}</span>
-                    <span className="ml-2 text-slate-600">– {p.identificador}</span>
+                    <span className="font-medium text-[var(--foreground)]">{p.nome}</span>
+                    <span className="mt-1 block text-sm text-[var(--muted)] sm:mt-0 sm:inline sm:ml-2">
+                      {p.identificador}
+                    </span>
                   </Link>
                 </li>
               ))}

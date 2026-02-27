@@ -9,20 +9,17 @@ export default async function NovaAvaliacaoPage({
 }) {
   const { error: errorQuery } = await searchParams;
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-lg">
-        <Link
-          href="/"
-          className="mb-6 inline-block text-slate-600 underline hover:text-slate-800"
-        >
-          Voltar
+    <div className="page-container bg-[var(--background)]">
+      <div className="content-width-medium flex flex-col gap-6">
+        <Link href="/" className="link-back">
+          <span aria-hidden>←</span> Voltar
         </Link>
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <h1 className="mb-6 text-2xl font-semibold text-slate-800">
+        <div className="card">
+          <h1 className="mb-6 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
             1. Identificação do paciente
           </h1>
           {errorQuery && (
-            <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-800" role="alert">
+            <div className="alert-error mb-6" role="alert">
               {safeDecodeError(errorQuery)}
             </div>
           )}

@@ -24,30 +24,30 @@ export default async function ImpressaoPage({
   const valorInicial = consulta.impressao_clinica ?? "";
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-2xl">
+    <div className="page-container bg-[var(--background)]">
+      <div className="content-width-medium flex flex-col gap-6">
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-800" role="alert">
+          <div className="alert-error" role="alert">
             {safeDecodeError(error)}
           </div>
         )}
-        <Link
-          href={`/avaliacao/${consultaId}/estrutura`}
-          className="mb-6 inline-block text-slate-600 underline hover:text-slate-800"
-        >
-          Voltar
+        <Link href={`/avaliacao/${consultaId}/estrutura`} className="link-back">
+          <span aria-hidden>←</span> Voltar
         </Link>
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
-          <h1 className="mb-6 text-2xl font-semibold text-slate-800">
+        <div className="card">
+          <h1 className="mb-4 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
             4. Impressão clínica
           </h1>
-          <p className="mb-6 text-slate-600">
+          <p className="mb-6 text-[var(--muted)]">
             Campo de texto livre, obrigatório. Será armazenado junto ao registro da consulta.
           </p>
           <form action={salvarImpressaoForm} className="space-y-6">
             <input type="hidden" name="consultaId" value={consultaId} />
             <div>
-              <label htmlFor="impressao_clinica" className="mb-2 block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="impressao_clinica"
+                className="mb-2 block text-sm font-medium text-[var(--foreground)]"
+              >
                 Impressão clínica
               </label>
               <textarea
@@ -56,14 +56,11 @@ export default async function ImpressaoPage({
                 required
                 rows={8}
                 defaultValue={valorInicial}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                className="input-textarea"
                 placeholder="Descreva a impressão clínica..."
               />
             </div>
-            <button
-              type="submit"
-              className="h-14 w-full rounded-xl bg-slate-800 text-lg font-medium text-white transition-colors hover:bg-slate-700 active:bg-slate-900"
-            >
+            <button type="submit" className="btn-primary h-14 w-full rounded-xl text-lg">
               Ver resultado
             </button>
           </form>

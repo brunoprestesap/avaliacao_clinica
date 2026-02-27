@@ -19,17 +19,21 @@ interface ResultadoRadaresProps {
 export function ResultadoRadares({ resultado }: ResultadoRadaresProps) {
   return (
     <>
-      <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-slate-800">
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)]">
           Radar estrutural
         </h2>
-        <RadarEstrutural data={resultado} />
+        <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-4 sm:p-6">
+          <RadarEstrutural data={resultado} />
+        </div>
       </section>
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-slate-800">
+        <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)]">
           Radar combinado (clínico normalizado + pilares)
         </h2>
-        <RadarCombinado data={resultado} />
+        <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-4 sm:p-6">
+          <RadarCombinado data={resultado} />
+        </div>
       </section>
     </>
   );

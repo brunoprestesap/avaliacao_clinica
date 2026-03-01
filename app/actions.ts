@@ -7,18 +7,10 @@
  */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import {
-  getIdentificarPaciente,
-  getIniciarNovaConsulta,
-  getSalvarFormularioClinico,
-  getSalvarPilaresEstruturais,
-  getSalvarImpressaoClinica,
-  getCalcularResultadoCompleto,
-  getConsultaRepository,
-} from "@/src/infrastructure/container";
-import type { ItensClinicos, ValorEscalaClinica, PilaresEstruturais, ValorEscalaEstrutural } from "@/src/domain";
-import { ITENS_CLINICOS } from "@/src/domain/constants";
-import { PILARES } from "@/src/domain/constants";
+import { getAvaliacaoUseCases } from "./use-cases";
+import type { ItensClinicos, PilaresEstruturais } from "@/src/application";
+import type { ValorEscalaClinica, ValorEscalaEstrutural } from "@/src/domain";
+import { ITENS_CLINICOS, PILARES } from "@/src/application";
 
 const COOKIE_MEDICO = "medico_consulta_id";
 
@@ -51,10 +43,9 @@ export async function iniciarAvaliacao(formData: FormData) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Nome e identificador são obrigatórios."));
   }
   try {
-    const identificarPaciente = getIdentificarPaciente();
-    const { paciente } = await identificarPaciente({ nome, identificador });
-    const iniciarNovaConsulta = getIniciarNovaConsulta();
-    const consultaId = await iniciarNovaConsulta(paciente.id);
+    const uc = getAvaliacaoUseCases();
+    const { paciente } = await uc.identificarPaciente({ nome, identificador });
+    const consultaId = await uc.iniciarNovaConsulta(paciente.id);
     redirect(pathAvaliacao(consultaId, "clinico"));
   } catch (e) {
     if (isRedirectError(e)) throw e;
@@ -88,8 +79,8 @@ export async function salvarClinicoForm(formData: FormData) {
   }
   const itens = parseItensFromFormData(formData);
   try {
-    const salvar = getSalvarFormularioClinico();
-    await salvar(consultaId, itens);
+    const uc = getAvaliacaoUseCases();
+    await uc.salvarFormularioClinico(consultaId, itens);
     redirect(pathAvaliacao(consultaId, "estrutura"));
   } catch (e) {
     if (isRedirectError(e)) throw e;
@@ -105,8 +96,8 @@ export async function salvarEstruturaForm(formData: FormData) {
   }
   const pilares = parsePilaresFromFormData(formData);
   try {
-    const salvar = getSalvarPilaresEstruturais();
-    await salvar(consultaId, pilares);
+    const uc = getAvaliacaoUseCases();
+    await uc.salvarPilaresEstruturais(consultaId, pilares);
     redirect(pathAvaliacao(consultaId, "bloqueado"));
   } catch (e) {
     if (isRedirectError(e)) throw e;
@@ -147,8 +138,8 @@ export async function gerarResultados(formData: FormData) {
     redirect(pathAvaliacao(consultaId, "bloqueado"));
   }
   try {
-    const calcular = getCalcularResultadoCompleto();
-    const resultado = await calcular(consultaId);
+    const uc = getAvaliacaoUseCases();
+    const resultado = await uc.calcularResultadoCompleto(consultaId);
     if (!resultado) {
       redirect(pathAvaliacao(consultaId, "bloqueado"));
     }
@@ -172,13 +163,12 @@ export async function salvarImpressaoEFinalizar(formData: FormData) {
     redirect(`${pathAvaliacao(consultaId, "resultado")}?error=` + encodeURIComponent("Impressão clínica é obrigatória."));
   }
   try {
-    const repo = getConsultaRepository();
-    const consulta = await repo.findById(consultaId);
+    const uc = getAvaliacaoUseCases();
+    const consulta = await uc.obterConsulta(consultaId);
     if (!consulta) {
       redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não encontrada."));
     }
-    const salvar = getSalvarImpressaoClinica();
-    await salvar(consultaId, impressaoClinica);
+    await uc.salvarImpressaoClinica(consultaId, impressaoClinica);
     redirect(consulta.patient_id ? `/avaliacao/historico/${consulta.patient_id}` : "/");
   } catch (e) {
     if (isRedirectError(e)) throw e;
@@ -195,8 +185,8 @@ export async function salvarImpressaoForm(formData: FormData) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
   try {
-    const salvar = getSalvarImpressaoClinica();
-    await salvar(consultaId, impressaoClinica);
+    const uc = getAvaliacaoUseCases();
+    await uc.salvarImpressaoClinica(consultaId, impressaoClinica);
     redirect(pathAvaliacao(consultaId, "resultado"));
   } catch (e) {
     if (isRedirectError(e)) throw e;

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { getPacienteRepository } from "@/src/infrastructure/container";
+import { getAvaliacaoUseCases } from "./use-cases";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 
 export default async function Home() {
-  const repo = getPacienteRepository();
-  const pacientes = await repo.listarTodos();
+  const uc = getAvaliacaoUseCases();
+  const pacientes = await uc.listarPacientes();
 
   return (
     <div className="page-container">

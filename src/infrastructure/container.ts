@@ -1,4 +1,4 @@
-import type { ConsultaRepository, PacienteRepository } from "@/src/application/ports";
+import type { AvaliacaoUseCases, ConsultaRepository, PacienteRepository } from "@/src/application/ports";
 import { ConsultaRepositoryJson } from "./repositories/ConsultaRepositoryJson";
 import { PacienteRepositoryJson } from "./repositories/PacienteRepositoryJson";
 import { ConsultaRepositorySupabase } from "./repositories/ConsultaRepositorySupabase";
@@ -10,6 +10,8 @@ import { createSalvarPilaresEstruturais } from "@/src/application/use-cases/Salv
 import { createSalvarImpressaoClinica } from "@/src/application/use-cases/SalvarImpressaoClinica";
 import { createCalcularResultadoCompleto } from "@/src/application/use-cases/CalcularResultadoCompleto";
 import { createListarHistoricoPaciente } from "@/src/application/use-cases/ListarHistoricoPaciente";
+import { createObterConsulta } from "@/src/application/use-cases/ObterConsulta";
+import { createObterResultadoParaExibicao } from "@/src/application/use-cases/ObterResultadoParaExibicao";
 
 const useSupabase = process.env.PERSISTENCE === "supabase";
 
@@ -30,26 +32,20 @@ function getPacienteRepository(): PacienteRepository {
   return pacienteRepo;
 }
 
-export function getIdentificarPaciente() {
-  return createIdentificarPaciente(getPacienteRepository());
+export function createAvaliacaoUseCases(): AvaliacaoUseCases {
+  const consultaRepo = getConsultaRepository();
+  const pacienteRepo = getPacienteRepository();
+  return {
+    identificarPaciente: createIdentificarPaciente(pacienteRepo),
+    iniciarNovaConsulta: createIniciarNovaConsulta(consultaRepo),
+    salvarFormularioClinico: createSalvarFormularioClinico(consultaRepo),
+    salvarPilaresEstruturais: createSalvarPilaresEstruturais(consultaRepo),
+    salvarImpressaoClinica: createSalvarImpressaoClinica(consultaRepo),
+    calcularResultadoCompleto: createCalcularResultadoCompleto(consultaRepo),
+    listarHistoricoPaciente: createListarHistoricoPaciente(consultaRepo),
+    obterConsulta: createObterConsulta(consultaRepo),
+    obterResultadoParaExibicao: createObterResultadoParaExibicao(consultaRepo),
+    listarPacientes: () => pacienteRepo.listarTodos(),
+    obterPaciente: (id) => pacienteRepo.findById(id),
+  };
 }
-export function getIniciarNovaConsulta() {
-  return createIniciarNovaConsulta(getConsultaRepository());
-}
-export function getSalvarFormularioClinico() {
-  return createSalvarFormularioClinico(getConsultaRepository());
-}
-export function getSalvarPilaresEstruturais() {
-  return createSalvarPilaresEstruturais(getConsultaRepository());
-}
-export function getSalvarImpressaoClinica() {
-  return createSalvarImpressaoClinica(getConsultaRepository());
-}
-export function getCalcularResultadoCompleto() {
-  return createCalcularResultadoCompleto(getConsultaRepository());
-}
-export function getListarHistoricoPaciente() {
-  return createListarHistoricoPaciente(getConsultaRepository());
-}
-
-export { getConsultaRepository, getPacienteRepository };

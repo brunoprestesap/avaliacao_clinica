@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getListarHistoricoPaciente, getPacienteRepository } from "@/src/infrastructure/container";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { ArrowLeft, Calendar, FileText, Activity } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +11,10 @@ export default async function HistoricoPage({
   params: Promise<{ patientId: string }>;
 }) {
   const { patientId } = await params;
-  const repoPaciente = getPacienteRepository();
-  const listarHistorico = getListarHistoricoPaciente();
+  const uc = getAvaliacaoUseCases();
   const [paciente, consultas] = await Promise.all([
-    repoPaciente.findById(patientId),
-    listarHistorico(patientId),
+    uc.obterPaciente(patientId),
+    uc.listarHistoricoPaciente(patientId),
   ]);
   if (!paciente) {
     redirect("/");

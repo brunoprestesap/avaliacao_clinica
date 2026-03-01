@@ -1,15 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getConsultaRepository } from "@/src/infrastructure/container";
-import { clinicoNormalizadoParaRadar, buildRadarPilares } from "@/src/domain/calculos";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
 import {
   CLASSIFICACAO_CLINICA_LABELS,
   CLASSIFICACAO_ESTRUTURA_LABELS,
   VARIACAO_LABELS,
-  PILARES_FULL_MARK,
-} from "@/src/domain/constants";
-import type { Consulta } from "@/src/domain";
-import type { ResultadoCompletoDTO } from "@/src/application/use-cases/CalcularResultadoCompleto";
+} from "@/src/application";
 import { ResultadoRadares } from "../../../components/ResultadoRadares";
 import { salvarImpressaoEFinalizar } from "../../../actions";
 import { Stepper } from "../../../components/Stepper";
@@ -19,23 +15,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-function buildResultadoDTO(consulta: Consulta): ResultadoCompletoDTO {
-  const c = consulta.clinico!;
-  const e = consulta.estrutura!;
-  const clinico_normalizado_radar = clinicoNormalizadoParaRadar(c.score_total);
-  const radar_pilares = buildRadarPilares(e.pilares);
-  const radar_combinado = [
-    { subject: "Clínico", value: clinico_normalizado_radar, fullMark: PILARES_FULL_MARK },
-    ...radar_pilares,
-  ];
-  return {
-    consulta,
-    clinico_normalizado_radar,
-    radar_pilares,
-    radar_combinado,
-  };
-}
-
 export default async function ResultadoPage({
   params,
   searchParams,
@@ -44,22 +23,15 @@ export default async function ResultadoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const repo = getConsultaRepository();
-  const consulta = await repo.findById(consultaId);
-  if (!consulta) {
+  const uc = getAvaliacaoUseCases();
+  const resultado = await uc.obterResultadoParaExibicao(consultaId);
+  if (!resultado) {
     redirect("/avaliacao/nova");
   }
-  if (!consulta.clinico || !consulta.estrutura) {
-    redirect(`/avaliacao/${consultaId}/clinico`);
-  }
-  if (!consulta.fase_indicada) {
-    redirect(`/avaliacao/${consultaId}/bloqueado`);
-  }
-
-  const c = consulta.clinico;
-  const e = consulta.estrutura;
+  const { consulta } = resultado;
+  const c = consulta.clinico!;
+  const e = consulta.estrutura!;
   const comp = consulta.comparacao;
-  const resultado = buildResultadoDTO(consulta);
   const jaSalvou = Boolean(consulta.impressao_clinica);
 
   return (

@@ -1,12 +1,12 @@
 "use client";
 
-import type { ItemClinicoId, PilarId } from "@/src/domain";
+import type { ItemClinicoId, PilarId } from "@/src/application";
 import {
   ITENS_CLINICOS,
   ESCALA_CLINICA_LABELS,
   PILARES,
   ESCALA_ESTRUTURAL_LABELS,
-} from "@/src/domain/constants";
+} from "@/src/application";
 
 type EscalaClinica = 0 | 1 | 2 | 3;
 type EscalaEstrutural = 0 | 1 | 2 | 3 | 4;

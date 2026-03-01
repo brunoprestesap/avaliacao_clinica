@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getConsultaRepository } from "@/src/infrastructure/container";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
 
 /** Impressão clínica passou para a tela de resultado. Redireciona conforme estado da consulta. */
 export default async function ImpressaoPage({
@@ -8,8 +8,8 @@ export default async function ImpressaoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: consultaId } = await params;
-  const repo = getConsultaRepository();
-  const consulta = await repo.findById(consultaId);
+  const uc = getAvaliacaoUseCases();
+  const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
   }

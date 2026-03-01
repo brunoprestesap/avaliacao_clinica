@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getConsultaRepository } from "@/src/infrastructure/container";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 
@@ -10,8 +10,8 @@ export default async function BloqueadoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: consultaId } = await params;
-  const repo = getConsultaRepository();
-  const consulta = await repo.findById(consultaId);
+  const uc = getAvaliacaoUseCases();
+  const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
   }

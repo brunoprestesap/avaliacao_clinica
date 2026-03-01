@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getConsultaRepository } from "@/src/infrastructure/container";
-import { INSTRUCAO_CLINICA } from "@/src/domain/constants";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
+import { INSTRUCAO_CLINICA } from "@/src/application";
 import { FormularioClinico } from "../../../components/FormularioEscala";
 import { salvarClinicoForm } from "../../../actions";
 import { Stepper } from "../../../components/Stepper";
@@ -18,8 +18,8 @@ export default async function ClinicoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const repo = getConsultaRepository();
-  const consulta = await repo.findById(consultaId);
+  const uc = getAvaliacaoUseCases();
+  const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
   }

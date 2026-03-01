@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getConsultaRepository } from "@/src/infrastructure/container";
+import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { desbloquearMedico } from "../../../actions";
 import { ErrorToast } from "../../../components/ErrorToast";
 import { SubmitButton } from "../../../components/SubmitButton";
@@ -17,8 +17,8 @@ export default async function DesbloquearPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const repo = getConsultaRepository();
-  const consulta = await repo.findById(consultaId);
+  const uc = getAvaliacaoUseCases();
+  const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
   }

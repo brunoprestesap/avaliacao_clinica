@@ -14,8 +14,8 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import type { ResultadoCompletoDTO } from "@/src/application/use-cases/CalcularResultadoCompleto";
-import { PILARES_FULL_MARK } from "@/src/domain/constants";
+import type { ResultadoCompletoDTO } from "@/src/application";
+import { PILARES_FULL_MARK } from "@/src/application";
 
 interface RadarChartsProps {
   data: ResultadoCompletoDTO;

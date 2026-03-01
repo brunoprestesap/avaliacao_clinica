@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { getSession } from "./auth";
+import { logoutAction } from "./auth-actions";
+import { Button } from "@/components/ui/button";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -20,11 +23,12 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { user } = await getSession();
   return (
     <html lang="pt-BR" className={jakarta.variable}>
       <body className="antialiased font-sans">
@@ -34,6 +38,20 @@ export default function RootLayout({
         >
           Pular para o conteúdo
         </a>
+        {user && (
+          <header className="border-b border-border/80 bg-card/80 backdrop-blur-sm sticky top-0 z-40">
+            <div className="content-width-narrow mx-auto flex h-14 items-center justify-between px-4">
+              <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-xs" title={user.email}>
+                {user.email}
+              </span>
+              <form action={logoutAction}>
+                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  Sair
+                </Button>
+              </form>
+            </div>
+          </header>
+        )}
         <div id="main" role="main">
           {children}
         </div>

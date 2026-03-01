@@ -1,7 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ConsultaRepository } from "@/src/application/ports";
 import type { Consulta, FaseIndicadaLabel } from "@/src/domain";
-import { getSupabase } from "@/src/infrastructure/supabase/server";
-import type { ConsultaRow } from "@/src/infrastructure/supabase/database.types";
+import type { Database } from "@/src/infrastructure/supabase/database.types";
 
 const TABLE = "consultas";
 
@@ -39,8 +39,9 @@ function rowToConsulta(row: Record<string, unknown>): Consulta {
 }
 
 export class ConsultaRepositorySupabase implements ConsultaRepository {
+  constructor(private supabase: SupabaseClient<Database>) {}
+
   async save(consulta: Consulta): Promise<void> {
-    const supabase = getSupabase();
     const faseValue =
       consulta.fase_indicada != null ? FASE_TO_NUMBER[consulta.fase_indicada] : null;
     const row = {
@@ -53,22 +54,20 @@ export class ConsultaRepositorySupabase implements ConsultaRepository {
       impressao_clinica: consulta.impressao_clinica ?? null,
       comparacao: consulta.comparacao ?? null,
     };
-    const { error } = await supabase.from(TABLE).upsert(row as never, {
+    const { error } = await this.supabase.from(TABLE).upsert(row as never, {
       onConflict: "id",
     });
     if (error) throw new Error(`ConsultaRepositorySupabase.save: ${error.message}`);
   }
 
   async findById(id: string): Promise<Consulta | null> {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.from(TABLE).select("*").eq("id", id).maybeSingle();
+    const { data, error } = await this.supabase.from(TABLE).select("*").eq("id", id).maybeSingle();
     if (error) throw new Error(`ConsultaRepositorySupabase.findById: ${error.message}`);
     return data ? rowToConsulta(data) : null;
   }
 
   async findByPatientIdOrderByDate(patientId: string): Promise<Consulta[]> {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from(TABLE)
       .select("*")
       .eq("patient_id", patientId)

@@ -4,6 +4,8 @@ import type { Paciente } from "@/src/domain";
 export interface IdentificarPacienteInput {
   nome: string;
   identificador: string;
+  /** Id do usuário autenticado (obrigatório com Supabase/RLS para novos pacientes). */
+  userId?: string;
 }
 
 export interface IdentificarPacienteResult {
@@ -29,7 +31,7 @@ export function createIdentificarPaciente(repo: PacienteRepository) {
       nome,
       identificador,
     };
-    await repo.save(paciente);
+    await repo.save(paciente, input.userId);
     return { paciente, criado: true };
   };
 }

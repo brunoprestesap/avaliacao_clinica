@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/app/auth";
 import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
@@ -10,7 +11,8 @@ export default async function BloqueadoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: consultaId } = await params;
-  const uc = getAvaliacaoUseCases();
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AvaliacaoUseCases, ConsultaRepository, PacienteRepository } from "@/src/application/ports";
+import type { Database } from "./supabase/database.types";
 import {
   PAGINACAO_PACIENTES_DEFAULT_LIMIT,
   normalizarLimite,
@@ -8,6 +10,7 @@ import { ConsultaRepositoryJson } from "./repositories/ConsultaRepositoryJson";
 import { PacienteRepositoryJson } from "./repositories/PacienteRepositoryJson";
 import { ConsultaRepositorySupabase } from "./repositories/ConsultaRepositorySupabase";
 import { PacienteRepositorySupabase } from "./repositories/PacienteRepositorySupabase";
+import { getSupabase } from "./supabase/server";
 import { createIdentificarPaciente } from "@/src/application/use-cases/IdentificarPaciente";
 import { createIniciarNovaConsulta } from "@/src/application/use-cases/IniciarNovaConsulta";
 import { createSalvarFormularioClinico } from "@/src/application/use-cases/SalvarFormularioClinico";
@@ -20,26 +23,32 @@ import { createObterResultadoParaExibicao } from "@/src/application/use-cases/Ob
 
 const useSupabase = process.env.PERSISTENCE === "supabase";
 
-let consultaRepo: ConsultaRepository | null = null;
-let pacienteRepo: PacienteRepository | null = null;
+let consultaRepoFallback: ConsultaRepository | null = null;
+let pacienteRepoFallback: PacienteRepository | null = null;
 
-function getConsultaRepository(): ConsultaRepository {
-  if (!consultaRepo) {
-    consultaRepo = useSupabase ? new ConsultaRepositorySupabase() : new ConsultaRepositoryJson();
+function getConsultaRepository(supabase?: SupabaseClient<Database>): ConsultaRepository {
+  if (supabase) return new ConsultaRepositorySupabase(supabase);
+  if (!consultaRepoFallback) {
+    consultaRepoFallback = useSupabase
+      ? new ConsultaRepositorySupabase(getSupabase())
+      : new ConsultaRepositoryJson();
   }
-  return consultaRepo;
+  return consultaRepoFallback;
 }
 
-function getPacienteRepository(): PacienteRepository {
-  if (!pacienteRepo) {
-    pacienteRepo = useSupabase ? new PacienteRepositorySupabase() : new PacienteRepositoryJson();
+function getPacienteRepository(supabase?: SupabaseClient<Database>): PacienteRepository {
+  if (supabase) return new PacienteRepositorySupabase(supabase);
+  if (!pacienteRepoFallback) {
+    pacienteRepoFallback = useSupabase
+      ? new PacienteRepositorySupabase(getSupabase())
+      : new PacienteRepositoryJson();
   }
-  return pacienteRepo;
+  return pacienteRepoFallback;
 }
 
-export function createAvaliacaoUseCases(): AvaliacaoUseCases {
-  const consultaRepo = getConsultaRepository();
-  const pacienteRepo = getPacienteRepository();
+export function createAvaliacaoUseCases(supabase?: SupabaseClient<Database>): AvaliacaoUseCases {
+  const consultaRepo = getConsultaRepository(supabase);
+  const pacienteRepo = getPacienteRepository(supabase);
   return {
     identificarPaciente: createIdentificarPaciente(pacienteRepo),
     iniciarNovaConsulta: createIniciarNovaConsulta(consultaRepo),

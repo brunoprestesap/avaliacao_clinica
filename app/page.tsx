@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSession } from "./auth";
 import { getAvaliacaoUseCases } from "./use-cases";
 import { iniciarAvaliacao } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -18,12 +19,14 @@ export default async function Home({
 }: {
   searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
 }) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const params = await searchParams;
   const page = parsePageFromQuery(params.page);
   const limit = parseLimitFromQuery(params.limit);
   const query = parseSearchFromQuery(params.q);
 
-  const uc = getAvaliacaoUseCases();
   const { pacientes, total, page: currentPage, limit: currentLimit } = await uc.listarPacientes({
     page,
     limit,

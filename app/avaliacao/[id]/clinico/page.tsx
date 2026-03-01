@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/app/auth";
 import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { INSTRUCAO_CLINICA } from "@/src/application";
 import { FormularioClinico } from "../../../components/FormularioEscala";
@@ -18,7 +19,8 @@ export default async function ClinicoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const uc = getAvaliacaoUseCases();
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

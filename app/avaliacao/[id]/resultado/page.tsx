@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/app/auth";
 import { getAvaliacaoUseCases } from "@/app/use-cases";
 import {
   CLASSIFICACAO_CLINICA_LABELS,
@@ -23,7 +24,8 @@ export default async function ResultadoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const uc = getAvaliacaoUseCases();
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
   const resultado = await uc.obterResultadoParaExibicao(consultaId);
   if (!resultado) {
     redirect("/avaliacao/nova");

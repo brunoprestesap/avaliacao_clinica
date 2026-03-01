@@ -23,7 +23,7 @@ export interface ListarPacientesResult {
 }
 
 export interface PacienteRepository {
-  save(paciente: Paciente): Promise<void>;
+  save(paciente: Paciente, ownerId?: string): Promise<void>;
   findById(id: string): Promise<Paciente | null>;
   findByIdentificador(identificador: string): Promise<Paciente | null>;
   listarTodos(): Promise<Paciente[]>;

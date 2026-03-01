@@ -7,6 +7,7 @@
  */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { getSession } from "./auth";
 import { getAvaliacaoUseCases } from "./use-cases";
 import type { ItensClinicos, PilaresEstruturais } from "@/src/application";
 import type { ValorEscalaClinica, ValorEscalaEstrutural } from "@/src/domain";
@@ -37,14 +38,20 @@ function isRedirectError(e: unknown): boolean {
 }
 
 export async function iniciarAvaliacao(formData: FormData) {
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const nome = (formData.get("nome") as string)?.trim() ?? "";
   const identificador = (formData.get("identificador") as string)?.trim() ?? "";
   if (!nome || !identificador) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Nome e identificador são obrigatórios."));
   }
   try {
-    const uc = getAvaliacaoUseCases();
-    const { paciente } = await uc.identificarPaciente({ nome, identificador });
+    const { paciente } = await uc.identificarPaciente({
+      nome,
+      identificador,
+      userId: process.env.PERSISTENCE === "supabase" ? user?.id : undefined,
+    });
     const consultaId = await uc.iniciarNovaConsulta(paciente.id);
     redirect(pathAvaliacao(consultaId, "clinico"));
   } catch (e) {
@@ -73,13 +80,15 @@ function parsePilaresFromFormData(formData: FormData): PilaresEstruturais {
 }
 
 export async function salvarClinicoForm(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
   const itens = parseItensFromFormData(formData);
   try {
-    const uc = getAvaliacaoUseCases();
     await uc.salvarFormularioClinico(consultaId, itens);
     redirect(pathAvaliacao(consultaId, "estrutura"));
   } catch (e) {
@@ -90,13 +99,15 @@ export async function salvarClinicoForm(formData: FormData) {
 }
 
 export async function salvarEstruturaForm(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
   const pilares = parsePilaresFromFormData(formData);
   try {
-    const uc = getAvaliacaoUseCases();
     await uc.salvarPilaresEstruturais(consultaId, pilares);
     redirect(pathAvaliacao(consultaId, "bloqueado"));
   } catch (e) {
@@ -128,6 +139,9 @@ export async function desbloquearMedico(formData: FormData) {
 }
 
 export async function gerarResultados(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
@@ -138,7 +152,6 @@ export async function gerarResultados(formData: FormData) {
     redirect(pathAvaliacao(consultaId, "bloqueado"));
   }
   try {
-    const uc = getAvaliacaoUseCases();
     const resultado = await uc.calcularResultadoCompleto(consultaId);
     if (!resultado) {
       redirect(pathAvaliacao(consultaId, "bloqueado"));
@@ -154,6 +167,9 @@ export async function gerarResultados(formData: FormData) {
 }
 
 export async function salvarImpressaoEFinalizar(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const consultaId = formData.get("consultaId");
   const impressaoClinica = (formData.get("impressao_clinica") as string)?.trim() ?? "";
   if (!isConsultaIdValido(consultaId)) {
@@ -163,7 +179,6 @@ export async function salvarImpressaoEFinalizar(formData: FormData) {
     redirect(`${pathAvaliacao(consultaId, "resultado")}?error=` + encodeURIComponent("Impressão clínica é obrigatória."));
   }
   try {
-    const uc = getAvaliacaoUseCases();
     const consulta = await uc.obterConsulta(consultaId);
     if (!consulta) {
       redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não encontrada."));
@@ -179,13 +194,15 @@ export async function salvarImpressaoEFinalizar(formData: FormData) {
 
 /** Legado: impressão clínica passou para a tela de resultado; mantido para compatibilidade. */
 export async function salvarImpressaoForm(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
   const consultaId = formData.get("consultaId");
   const impressaoClinica = (formData.get("impressao_clinica") as string)?.trim() ?? "";
   if (!isConsultaIdValido(consultaId)) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
   try {
-    const uc = getAvaliacaoUseCases();
     await uc.salvarImpressaoClinica(consultaId, impressaoClinica);
     redirect(pathAvaliacao(consultaId, "resultado"));
   } catch (e) {

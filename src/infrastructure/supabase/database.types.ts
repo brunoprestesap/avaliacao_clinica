@@ -15,6 +15,7 @@ export interface PacienteRow {
   id: string;
   nome: string;
   identificador: string;
+  user_id: string | null;
 }
 
 export interface Database {

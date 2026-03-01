@@ -1,6 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PacienteRepository } from "@/src/application/ports";
 import type { Paciente } from "@/src/domain";
-import { getSupabase } from "@/src/infrastructure/supabase/server";
+import type { Database } from "@/src/infrastructure/supabase/database.types";
 
 const TABLE = "pacientes";
 
@@ -22,30 +23,30 @@ function rowToPaciente(row: Record<string, unknown>): Paciente {
 }
 
 export class PacienteRepositorySupabase implements PacienteRepository {
-  async save(paciente: Paciente): Promise<void> {
-    const supabase = getSupabase();
+  constructor(private supabase: SupabaseClient<Database>) {}
+
+  async save(paciente: Paciente, ownerId?: string): Promise<void> {
     const row = {
       id: paciente.id,
       nome: paciente.nome,
       identificador: paciente.identificador,
+      user_id: ownerId ?? null,
     };
-    const { error } = await supabase.from(TABLE).upsert(row as never, {
+    const { error } = await this.supabase.from(TABLE).upsert(row as never, {
       onConflict: "id",
     });
     if (error) throw new Error(`PacienteRepositorySupabase.save: ${error.message}`);
   }
 
   async findById(id: string): Promise<Paciente | null> {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.from(TABLE).select("*").eq("id", id).maybeSingle();
+    const { data, error } = await this.supabase.from(TABLE).select("*").eq("id", id).maybeSingle();
     if (error) throw new Error(`PacienteRepositorySupabase.findById: ${error.message}`);
     return data ? rowToPaciente(data) : null;
   }
 
   async findByIdentificador(identificador: string): Promise<Paciente | null> {
-    const supabase = getSupabase();
     const normalized = identificador.trim().toLowerCase();
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from(TABLE)
       .select("*")
       .ilike("identificador", normalized)
@@ -59,8 +60,7 @@ export class PacienteRepositorySupabase implements PacienteRepository {
   }
 
   async listarTodos(): Promise<Paciente[]> {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.from(TABLE).select("*").order("nome", { ascending: true });
+    const { data, error } = await this.supabase.from(TABLE).select("*").order("nome", { ascending: true });
     if (error) throw new Error(`PacienteRepositorySupabase.listarTodos: ${error.message}`);
     return (data ?? []).map(rowToPaciente);
   }
@@ -70,8 +70,7 @@ export class PacienteRepositorySupabase implements PacienteRepository {
     limit: number,
     query?: string
   ): Promise<{ pacientes: Paciente[]; total: number }> {
-    const supabase = getSupabase();
-    let builder = supabase.from(TABLE).select("*", { count: "exact" }).order("nome", { ascending: true });
+    let builder = this.supabase.from(TABLE).select("*", { count: "exact" }).order("nome", { ascending: true });
     if (query && query.trim() !== "") {
       const pattern = `%${escapeIlikePattern(query.trim())}%`;
       builder = builder.or(`nome.ilike.${pattern},identificador.ilike.${pattern}`);

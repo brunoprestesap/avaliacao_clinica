@@ -27,7 +27,7 @@ async function writePacientes(pacientes: Paciente[]): Promise<void> {
 }
 
 export class PacienteRepositoryJson implements PacienteRepository {
-  async save(paciente: Paciente): Promise<void> {
+  async save(paciente: Paciente, _ownerId?: string): Promise<void> {
     const list = await readPacientes();
     const idx = list.findIndex((p) => p.id === paciente.id);
     if (idx >= 0) {

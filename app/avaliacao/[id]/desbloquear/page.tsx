@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSession } from "@/app/auth";
 import { getAvaliacaoUseCases } from "@/app/use-cases";
 import { desbloquearMedico } from "../../../actions";
 import { ErrorToast } from "../../../components/ErrorToast";
@@ -17,7 +18,8 @@ export default async function DesbloquearPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const uc = getAvaliacaoUseCases();
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

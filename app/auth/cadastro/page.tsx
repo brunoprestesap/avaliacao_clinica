@@ -1,0 +1,94 @@
+import Link from "next/link";
+import { signupAction } from "../../auth-actions";
+import { SubmitButton } from "../../components/SubmitButton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ErrorToast } from "../../components/ErrorToast";
+
+export default async function CadastroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+  const params = await searchParams;
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-border/80 shadow-[var(--shadow-card)] overflow-hidden">
+        <div className="h-1 w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden />
+        <CardHeader className="pb-2 pt-6">
+          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+            Cadastro
+          </CardTitle>
+          <p className="text-muted-foreground text-sm mt-1">
+            Crie sua conta com email e senha.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-4 pb-8">
+          {params.success ? (
+            <p className="text-sm text-green-600 dark:text-green-400 mb-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+              {params.success}
+            </p>
+          ) : null}
+          <ErrorToast error={params.error} />
+          <form action={signupAction} className="flex flex-col gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-semibold text-foreground tracking-tight">
+                Email
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="seu@email.com"
+                className="h-12 rounded-2xl border-2 focus-visible:ring-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-semibold text-foreground tracking-tight">
+                Senha
+              </Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                placeholder="Mínimo 6 caracteres"
+                className="h-12 rounded-2xl border-2 focus-visible:ring-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground tracking-tight">
+                Confirmar senha
+              </Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                placeholder="Repita a senha"
+                className="h-12 rounded-2xl border-2 focus-visible:ring-2"
+              />
+            </div>
+            <SubmitButton
+              label="Cadastrar"
+              className="h-14 w-full rounded-2xl text-lg font-semibold mt-4 shadow-lg hover:shadow-xl transition-all"
+            />
+          </form>
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Já tem conta?{" "}
+            <Link href="/login" className="text-primary font-medium underline underline-offset-2">
+              Entrar
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

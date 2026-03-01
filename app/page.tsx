@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAvaliacaoUseCases } from "./use-cases";
+import { iniciarAvaliacao } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
@@ -39,21 +40,38 @@ export default async function Home() {
             </h2>
             <ul className="grid gap-3 sm:grid-cols-1">
               {pacientes.map((p) => (
-                <li key={p.id}>
+                <li 
+                  key={p.id}
+                  className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] hover:bg-card/80 active:scale-[0.99] sm:p-5"
+                >
                   <Link
                     href={`/avaliacao/historico/${p.id}`}
-                    className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] hover:bg-card/80 active:scale-[0.99] sm:p-5"
+                    className="flex-1 flex flex-col gap-0.5"
                   >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-foreground text-base group-hover:text-primary transition-colors">
-                        {p.nome}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-medium">
-                        Prontuário: {p.identificador}
-                      </span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    <span className="font-semibold text-foreground text-base group-hover:text-primary transition-colors">
+                      {p.nome}
+                    </span>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      Prontuário: {p.identificador}
+                    </span>
                   </Link>
+                  <div className="flex items-center gap-3 ml-4">
+                    <form action={iniciarAvaliacao}>
+                      <input type="hidden" name="nome" value={p.nome} />
+                      <input type="hidden" name="identificador" value={p.identificador} />
+                      <Button 
+                        type="submit" 
+                        variant="secondary" 
+                        size="sm"
+                        className="rounded-xl font-medium shadow-sm hover:shadow transition-all"
+                      >
+                        Nova Avaliação
+                      </Button>
+                    </form>
+                    <Link href={`/avaliacao/historico/${p.id}`} tabIndex={-1} aria-hidden="true">
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -4,7 +4,11 @@ import { getConsultaRepository } from "@/src/infrastructure/container";
 import { INSTRUCAO_PILARES } from "@/src/domain/constants";
 import { FormularioPilares } from "../../../components/FormularioEscala";
 import { salvarEstruturaForm } from "../../../actions";
-import { safeDecodeError } from "../../../lib/safeDecodeError";
+import { Stepper } from "../../../components/Stepper";
+import { SubmitButton } from "../../../components/SubmitButton";
+import { ErrorToast } from "../../../components/ErrorToast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default async function EstruturaPage({
   params,
@@ -13,8 +17,7 @@ export default async function EstruturaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { id: consultaId } = await params;
-  const { error } = await searchParams;
+  const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
   const repo = getConsultaRepository();
   const consulta = await repo.findById(consultaId);
   if (!consulta) {
@@ -23,36 +26,36 @@ export default async function EstruturaPage({
   if (!consulta.clinico) {
     redirect(`/avaliacao/${consultaId}/clinico`);
   }
+  if (consulta.impressao_clinica) {
+    redirect(`/avaliacao/${consultaId}/resultado`);
+  }
   const valoresIniciais = consulta.estrutura?.pilares;
 
   return (
-    <div className="page-container bg-[var(--background)]">
+    <div className="page-container">
       <div className="content-width-medium flex flex-col gap-6">
-        {error && (
-          <div className="alert-error" role="alert">
-            {safeDecodeError(error)}
-          </div>
-        )}
-        <Link href={`/avaliacao/${consultaId}/clinico`} className="link-back">
-          <span aria-hidden>←</span> Voltar
+        <ErrorToast error={error} />
+        <Link href={`/avaliacao/${consultaId}/clinico`} className="link-back inline-flex items-center w-fit mb-2">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Clínica
         </Link>
-        <div className="card">
-          <h1 className="mb-4 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
-            3. Pilares da saúde mental
-          </h1>
-          <p className="mb-3 text-[var(--muted)] sm:text-base">{INSTRUCAO_PILARES}</p>
-          <p className="mb-6 text-sm text-[var(--muted)]">
-            Escala: 0 = Muito ruim / totalmente desorganizado · 1 = Ruim · 2 = Regular · 3 = Bom ·
-            4 = Muito bom / bem estruturado
-          </p>
-          <form action={salvarEstruturaForm} className="space-y-6">
-            <input type="hidden" name="consultaId" value={consultaId} />
-            <FormularioPilares valoresIniciais={valoresIniciais} />
-            <button type="submit" className="btn-primary h-14 w-full rounded-xl text-lg">
-              Continuar para Impressão clínica
-            </button>
-          </form>
-        </div>
+        <Stepper currentStep="pilares" />
+        <Card className="border-border/80 shadow-[var(--shadow-card)] mt-2">
+          <CardHeader className="pb-4 space-y-3">
+            <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+              3. Pilares da Saúde Mental
+            </CardTitle>
+            <CardDescription className="text-base text-muted-foreground leading-relaxed">
+              {INSTRUCAO_PILARES}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={salvarEstruturaForm} className="space-y-8 mt-2">
+              <input type="hidden" name="consultaId" value={consultaId} />
+              <FormularioPilares valoresIniciais={valoresIniciais} />
+              <SubmitButton label="Finalizar Avaliação" className="h-14 w-full rounded-xl text-lg font-semibold mt-8 shadow-sm hover:shadow-md transition-shadow" />
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

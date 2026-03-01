@@ -3,13 +3,13 @@ import type {
   PilaresEstruturais,
   ClassificacaoClinica,
   ClassificacaoEstrutural,
-  FaseIndicada,
+  FaseIndicadaLabel,
   VariacaoComparacao,
   PilarId,
   Consulta,
   ComparacaoResultado,
 } from "./types";
-import { ITENS_CLINICOS, PILARES } from "./constants";
+import { ITENS_CLINICOS, PILARES, SCORE_CLINICO_MAX, PILARES_FULL_MARK } from "./constants";
 
 /** Soma dos itens C1–C14 (0–42) */
 export function calcularScoreClinico(itens: ItensClinicos): number {
@@ -43,22 +43,31 @@ export function classificacaoEstrutural(media: number): ClassificacaoEstrutural 
   return "ESTRUTURA_BEM_ESTRUTURADA";
 }
 
-/** Indicação FASE pela matriz decisória; sobrescrita se alerta ideação */
-export function indicarFase(
-  scoreClinico: number,
-  mediaEstrutural: number,
-  alertaIdeacaoAtivo: boolean
-): FaseIndicada {
-  if (alertaIdeacaoAtivo) return 4;
-  if (scoreClinico >= 29) return 4;
-  if (scoreClinico >= 18) return mediaEstrutural < 2.5 ? 3 : 2;
-  if (scoreClinico >= 8) return mediaEstrutural < 2.0 ? 2 : 1;
-  return 1;
+/** Matriz oficial FASE (Integral / Núcleo / Essência); ideacao = valor da pergunta 9 (C14) */
+export function calcularFase(
+  score: number,
+  estrutura: number,
+  ideacao: number
+): FaseIndicadaLabel {
+  if (ideacao >= 2) return "Integral";
+  if (score >= 29) return "Integral";
+  if (score >= 21 && estrutura <= 2.5) return "Integral";
+  if (score >= 11 || estrutura < 2.5) return "Núcleo";
+  return "Essência";
 }
 
 /** Normalização do score clínico para escala 0–4 (radar combinado) */
 export function clinicoNormalizadoParaRadar(scoreClinico: number): number {
-  return Math.round((scoreClinico / 42) * 4 * 100) / 100;
+  return Math.round((scoreClinico / SCORE_CLINICO_MAX) * PILARES_FULL_MARK * 100) / 100;
+}
+
+/** Dados dos 9 pilares para gráfico radar/barras (subject, value, fullMark) */
+export function buildRadarPilares(pilares: PilaresEstruturais): { subject: string; value: number; fullMark: number }[] {
+  return PILARES.map(({ id, label }) => ({
+    subject: label,
+    value: pilares[id],
+    fullMark: PILARES_FULL_MARK,
+  }));
 }
 
 /** Classificação da variação clínica (quanto menor melhor) */

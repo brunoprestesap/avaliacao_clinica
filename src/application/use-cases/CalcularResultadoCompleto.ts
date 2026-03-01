@@ -1,11 +1,12 @@
 import type { ConsultaRepository } from "../ports";
 import type { Consulta } from "@/src/domain";
 import {
-  indicarFase,
+  calcularFase,
   compararComUltima,
   clinicoNormalizadoParaRadar,
+  buildRadarPilares,
 } from "@/src/domain/calculos";
-import { PILARES } from "@/src/domain/constants";
+import { PILARES_FULL_MARK } from "@/src/domain/constants";
 
 export interface ResultadoCompletoDTO {
   consulta: Consulta;
@@ -19,13 +20,14 @@ export function createCalcularResultadoCompleto(repo: ConsultaRepository) {
     consultaId: string
   ): Promise<ResultadoCompletoDTO | null> {
     const consulta = await repo.findById(consultaId);
-    if (!consulta?.clinico || !consulta?.estrutura || !consulta.impressao_clinica) {
+    if (!consulta?.clinico || !consulta?.estrutura) {
       return null;
     }
-    const fase = indicarFase(
+    const ideacao = consulta.clinico.itens.C14;
+    const fase = calcularFase(
       consulta.clinico.score_total,
       consulta.estrutura.media,
-      consulta.clinico.alerta_ideacao
+      ideacao
     );
     const consultaComFase: Consulta = { ...consulta, fase_indicada: fase };
 
@@ -39,19 +41,12 @@ export function createCalcularResultadoCompleto(repo: ConsultaRepository) {
     }
     await repo.save(comComparacao);
 
+    const { estrutura } = consulta;
     const clinico_normalizado_radar = clinicoNormalizadoParaRadar(consulta.clinico.score_total);
-    const radar_pilares = PILARES.map(({ id, label }) => ({
-      subject: label,
-      value: consulta.estrutura!.pilares[id],
-      fullMark: 4,
-    }));
+    const radar_pilares = buildRadarPilares(estrutura.pilares);
     const radar_combinado = [
-      { subject: "Clínico", value: clinico_normalizado_radar, fullMark: 4 },
-      ...PILARES.map(({ id, label }) => ({
-        subject: label,
-        value: consulta.estrutura!.pilares[id],
-        fullMark: 4,
-      })),
+      { subject: "Clínico", value: clinico_normalizado_radar, fullMark: PILARES_FULL_MARK },
+      ...radar_pilares,
     ];
 
     return {

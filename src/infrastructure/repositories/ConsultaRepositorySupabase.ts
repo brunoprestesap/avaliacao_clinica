@@ -1,9 +1,29 @@
 import type { ConsultaRepository } from "@/src/application/ports";
-import type { Consulta } from "@/src/domain";
+import type { Consulta, FaseIndicadaLabel } from "@/src/domain";
 import { getSupabase } from "@/src/infrastructure/supabase/server";
 import type { ConsultaRow } from "@/src/infrastructure/supabase/database.types";
 
 const TABLE = "consultas";
+
+const FASE_TO_NUMBER: Record<FaseIndicadaLabel, number> = {
+  Essência: 1,
+  Núcleo: 2,
+  Integral: 4,
+};
+
+const NUMBER_TO_FASE: Record<number, FaseIndicadaLabel> = {
+  1: "Essência",
+  2: "Núcleo",
+  3: "Integral",
+  4: "Integral",
+};
+
+function normalizeFaseFromRow(value: unknown): Consulta["fase_indicada"] {
+  if (value == null) return undefined;
+  if (typeof value === "string") return value as FaseIndicadaLabel;
+  if (typeof value === "number" && NUMBER_TO_FASE[value]) return NUMBER_TO_FASE[value];
+  return undefined;
+}
 
 function rowToConsulta(row: Record<string, unknown>): Consulta {
   return {
@@ -12,7 +32,7 @@ function rowToConsulta(row: Record<string, unknown>): Consulta {
     date: row.date as string,
     clinico: row.clinico as Consulta["clinico"],
     estrutura: row.estrutura as Consulta["estrutura"],
-    fase_indicada: row.fase_indicada as Consulta["fase_indicada"],
+    fase_indicada: normalizeFaseFromRow(row.fase_indicada),
     impressao_clinica: row.impressao_clinica as string | undefined,
     comparacao: row.comparacao as Consulta["comparacao"],
   };
@@ -21,13 +41,15 @@ function rowToConsulta(row: Record<string, unknown>): Consulta {
 export class ConsultaRepositorySupabase implements ConsultaRepository {
   async save(consulta: Consulta): Promise<void> {
     const supabase = getSupabase();
-    const row: ConsultaRow = {
+    const faseValue =
+      consulta.fase_indicada != null ? FASE_TO_NUMBER[consulta.fase_indicada] : null;
+    const row = {
       id: consulta.id,
       patient_id: consulta.patient_id,
       date: consulta.date,
       clinico: consulta.clinico ?? null,
       estrutura: consulta.estrutura ?? null,
-      fase_indicada: consulta.fase_indicada ?? null,
+      fase_indicada: faseValue as string | number | null,
       impressao_clinica: consulta.impressao_clinica ?? null,
       comparacao: consulta.comparacao ?? null,
     };

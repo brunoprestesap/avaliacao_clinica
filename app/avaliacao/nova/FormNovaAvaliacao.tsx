@@ -1,43 +1,44 @@
 "use client";
 
 import { iniciarAvaliacao } from "../../actions";
+import { SubmitButton } from "../../components/SubmitButton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function FormNovaAvaliacao() {
   return (
     <form action={iniciarAvaliacao} className="flex flex-col gap-6">
-      <div>
-        <label htmlFor="nome" className="mb-2 block text-sm font-medium text-[var(--foreground)]">
+      <div className="space-y-2">
+        <Label htmlFor="nome" className="text-sm font-semibold text-foreground tracking-tight">
           Nome
-        </label>
-        <input
+        </Label>
+        <Input
           id="nome"
           name="nome"
           type="text"
           required
           autoComplete="name"
-          className="input-text"
-          placeholder="Nome completo"
+          placeholder="Ex.: João da Silva"
+          className="h-12 rounded-2xl border-2 focus-visible:ring-2"
         />
       </div>
-      <div>
-        <label
-          htmlFor="identificador"
-          className="mb-2 block text-sm font-medium text-[var(--foreground)]"
-        >
-          Identificador (prontuário ou CPF)
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="identificador" className="text-sm font-semibold text-foreground tracking-tight">
+          Nº Prontuário
+        </Label>
+        <Input
           id="identificador"
           name="identificador"
           type="text"
           required
-          className="input-text"
-          placeholder="Ex.: 12345 ou CPF"
+          placeholder="Ex.: 123456"
+          className="h-12 rounded-2xl border-2 focus-visible:ring-2"
         />
       </div>
-      <button type="submit" className="btn-primary h-14 w-full rounded-xl text-lg">
-        Iniciar avaliação
-      </button>
+      <SubmitButton
+        label="Iniciar"
+        className="h-14 w-full rounded-2xl text-lg font-semibold mt-4 shadow-lg hover:shadow-xl transition-all"
+      />
     </form>
   );
 }

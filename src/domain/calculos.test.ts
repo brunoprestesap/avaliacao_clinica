@@ -5,8 +5,9 @@ import {
   alertaIdeacao,
   calcularMediaEstrutural,
   classificacaoEstrutural,
-  indicarFase,
+  calcularFase,
   clinicoNormalizadoParaRadar,
+  buildRadarPilares,
   variacaoClinica,
   variacaoEstrutura,
   compararComUltima,
@@ -93,30 +94,28 @@ describe("classificacaoEstrutural", () => {
   });
 });
 
-describe("indicarFase", () => {
-  it("retorna 4 se alerta ideação", () => {
-    expect(indicarFase(0, 4, true)).toBe(4);
-    expect(indicarFase(8, 3, true)).toBe(4);
+describe("calcularFase", () => {
+  it("retorna Integral se ideação >= 2", () => {
+    expect(calcularFase(0, 4, 2)).toBe("Integral");
+    expect(calcularFase(8, 3, 3)).toBe("Integral");
   });
-  it("retorna 4 se score >= 29", () => {
-    expect(indicarFase(29, 1, false)).toBe(4);
-    expect(indicarFase(42, 2, false)).toBe(4);
+  it("retorna Integral se score >= 29", () => {
+    expect(calcularFase(29, 1, 0)).toBe("Integral");
+    expect(calcularFase(42, 2, 0)).toBe("Integral");
   });
-  it("retorna 3 ou 2 para score 18-28 conforme média", () => {
-    expect(indicarFase(18, 2.4, false)).toBe(3);
-    expect(indicarFase(18, 2.5, false)).toBe(2);
-    expect(indicarFase(28, 2, false)).toBe(3);
-    expect(indicarFase(28, 3, false)).toBe(2);
+  it("retorna Integral se score >= 21 e estrutura <= 2.5", () => {
+    expect(calcularFase(21, 2.5, 0)).toBe("Integral");
+    expect(calcularFase(28, 2, 0)).toBe("Integral");
   });
-  it("retorna 2 ou 1 para score 8-17 conforme média", () => {
-    expect(indicarFase(8, 1.9, false)).toBe(2);
-    expect(indicarFase(8, 2, false)).toBe(1);
-    expect(indicarFase(17, 1.5, false)).toBe(2);
-    expect(indicarFase(17, 2.5, false)).toBe(1);
+  it("retorna Núcleo se score >= 11 ou estrutura < 2.5", () => {
+    expect(calcularFase(11, 3, 0)).toBe("Núcleo");
+    expect(calcularFase(15, 2.4, 0)).toBe("Núcleo");
+    expect(calcularFase(10, 2.4, 0)).toBe("Núcleo");
   });
-  it("retorna 1 para score 0-7", () => {
-    expect(indicarFase(0, 0, false)).toBe(1);
-    expect(indicarFase(7, 4, false)).toBe(1);
+  it("retorna Essência quando score < 11 e estrutura >= 2.5", () => {
+    expect(calcularFase(0, 2.5, 0)).toBe("Essência");
+    expect(calcularFase(10, 3, 0)).toBe("Essência");
+    expect(calcularFase(7, 4, 0)).toBe("Essência");
   });
 });
 
@@ -125,6 +124,16 @@ describe("clinicoNormalizadoParaRadar", () => {
     expect(clinicoNormalizadoParaRadar(0)).toBe(0);
     expect(clinicoNormalizadoParaRadar(42)).toBe(4);
     expect(clinicoNormalizadoParaRadar(21)).toBe(2);
+  });
+});
+
+describe("buildRadarPilares", () => {
+  it("retorna 9 itens com subject, value, fullMark", () => {
+    const p = pilares([1, 2, 3, 2, 2, 2, 2, 2, 2]);
+    const result = buildRadarPilares(p);
+    expect(result).toHaveLength(9);
+    expect(result[0]).toEqual({ subject: "Sono", value: 1, fullMark: 4 });
+    expect(result.every((r) => r.fullMark === 4)).toBe(true);
   });
 });
 

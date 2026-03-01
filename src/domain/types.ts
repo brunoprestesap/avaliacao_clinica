@@ -27,7 +27,8 @@ export type ClassificacaoEstrutural =
 
 export type VariacaoComparacao = "MELHORA_RELEVANTE" | "ESTAVEL" | "PIORA_RELEVANTE";
 
-export type FaseIndicada = 1 | 2 | 3 | 4;
+/** Matriz oficial: Integral | Núcleo | Essência */
+export type FaseIndicadaLabel = "Integral" | "Núcleo" | "Essência";
 
 export interface ItensClinicos {
   C1: ValorEscalaClinica;
@@ -86,7 +87,8 @@ export interface Consulta {
   date: string; // ISO date
   clinico?: ClinicoResultado;
   estrutura?: EstruturaResultado;
-  fase_indicada?: FaseIndicada;
+  /** Matriz oficial (Integral/Núcleo/Essência); persistido como string */
+  fase_indicada?: FaseIndicadaLabel;
   impressao_clinica?: string;
   comparacao?: ComparacaoResultado;
 }

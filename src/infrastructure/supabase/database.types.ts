@@ -6,7 +6,7 @@ export interface ConsultaRow {
   date: string;
   clinico: ClinicoResultado | null;
   estrutura: EstruturaResultado | null;
-  fase_indicada: number | null;
+  fase_indicada: string | null;
   impressao_clinica: string | null;
   comparacao: ComparacaoResultado | null;
 }

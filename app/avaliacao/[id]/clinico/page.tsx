@@ -4,7 +4,11 @@ import { getConsultaRepository } from "@/src/infrastructure/container";
 import { INSTRUCAO_CLINICA } from "@/src/domain/constants";
 import { FormularioClinico } from "../../../components/FormularioEscala";
 import { salvarClinicoForm } from "../../../actions";
-import { safeDecodeError } from "../../../lib/safeDecodeError";
+import { Stepper } from "../../../components/Stepper";
+import { SubmitButton } from "../../../components/SubmitButton";
+import { ErrorToast } from "../../../components/ErrorToast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default async function ClinicoPage({
   params,
@@ -13,43 +17,42 @@ export default async function ClinicoPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { id: consultaId } = await params;
-  const { error } = await searchParams;
+  const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
   const repo = getConsultaRepository();
   const consulta = await repo.findById(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
   }
+  if (consulta.impressao_clinica) {
+    redirect(`/avaliacao/${consultaId}/resultado`);
+  }
   const valoresIniciais = consulta.clinico?.itens;
 
   return (
-    <div className="page-container bg-[var(--background)]">
+    <div className="page-container">
       <div className="content-width-medium flex flex-col gap-6">
-        {error && (
-          <div className="alert-error" role="alert">
-            {safeDecodeError(error)}
-          </div>
-        )}
-        <Link href="/" className="link-back">
-          <span aria-hidden>←</span> Voltar ao início
+        <ErrorToast error={error} />
+        <Link href="/" className="link-back inline-flex items-center w-fit mb-2">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Cancelar avaliação
         </Link>
-        <div className="card">
-          <h1 className="mb-4 text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
-            2. Formulário – Avaliação clínica
-          </h1>
-          <p className="mb-3 text-[var(--muted)] sm:text-base">{INSTRUCAO_CLINICA}</p>
-          <p className="mb-6 text-sm text-[var(--muted)]">
-            Escala: 0 = Não aconteceu · 1 = Aconteceu poucos dias · 2 = Aconteceu mais da metade
-            dos dias · 3 = Aconteceu quase todos os dias ou com intensidade importante
-          </p>
-          <form action={salvarClinicoForm} className="space-y-6">
-            <input type="hidden" name="consultaId" value={consultaId} />
-            <FormularioClinico valoresIniciais={valoresIniciais} />
-            <button type="submit" className="btn-primary h-14 w-full rounded-xl text-lg">
-              Continuar para Pilares Estruturais
-            </button>
-          </form>
-        </div>
+        <Stepper currentStep="clinico" />
+        <Card className="border-border/80 shadow-[var(--shadow-card)] mt-2">
+          <CardHeader className="pb-4 space-y-3">
+            <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+              2. Avaliação Clínica
+            </CardTitle>
+            <CardDescription className="text-base text-muted-foreground leading-relaxed">
+              {INSTRUCAO_CLINICA}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={salvarClinicoForm} className="space-y-8 mt-2">
+              <input type="hidden" name="consultaId" value={consultaId} />
+              <FormularioClinico valoresIniciais={valoresIniciais} />
+              <SubmitButton label="Concluir Parte 1" className="h-14 w-full rounded-xl text-lg font-semibold mt-8 shadow-sm hover:shadow-md transition-shadow" />
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

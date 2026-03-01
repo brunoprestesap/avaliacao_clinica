@@ -75,7 +75,7 @@ export async function requestResetAction(formData: FormData) {
     redirect("/auth/recuperar-senha?error=" + encodeURIComponent(msg))
   );
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getBaseUrl()}/auth/reset-password`,
+    redirectTo: `${getBaseUrl()}/auth/callback?next=${encodeURIComponent("/auth/reset-password")}`,
   });
   if (error) {
     redirect("/auth/recuperar-senha?error=" + encodeURIComponent(error.message));

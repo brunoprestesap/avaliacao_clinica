@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { resetPasswordAction } from "../../auth-actions";
 import { SubmitButton } from "../../components/SubmitButton";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,15 @@ import { ErrorToast } from "../../components/ErrorToast";
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; code?: string }>;
 }) {
-  const { error } = await searchParams;
+  const params = await searchParams;
+  if (params.code && typeof params.code === "string") {
+    redirect(
+      `/auth/callback?code=${encodeURIComponent(params.code)}&next=${encodeURIComponent("/auth/reset-password")}`
+    );
+  }
+  const { error } = params;
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-border/80 shadow-[var(--shadow-card)] overflow-hidden">

@@ -117,18 +117,18 @@ export default async function ResultadoPage({
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Clínico</p>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{VARIACAO_LABELS[comp.variacao_clinica]}</span>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clínico</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-semibold text-foreground">{VARIACAO_LABELS[comp.variacao_clinica]}</span>
                       <Badge variant={comp.delta_clinico < 0 ? "default" : comp.delta_clinico > 0 ? "destructive" : "secondary"}>
                         {comp.delta_clinico > 0 ? "+" : ""}{comp.delta_clinico}
                       </Badge>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Estrutura</p>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{VARIACAO_LABELS[comp.variacao_estrutura]}</span>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estrutura</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-semibold text-foreground">{VARIACAO_LABELS[comp.variacao_estrutura]}</span>
                       <Badge variant={comp.delta_estrutura > 0 ? "default" : comp.delta_estrutura < 0 ? "destructive" : "secondary"}>
                         {comp.delta_estrutura > 0 ? "+" : ""}{comp.delta_estrutura.toFixed(2)}
                       </Badge>
@@ -136,16 +136,20 @@ export default async function ResultadoPage({
                   </div>
                   {comp.pilar_maior_melhora && (
                     <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Maior melhora</p>
-                      <p className="font-medium">{comp.pilar_maior_melhora.label}</p>
-                      <Badge variant="default">+{comp.pilar_maior_melhora.delta}</Badge>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Maior melhora</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-base font-semibold text-foreground">{comp.pilar_maior_melhora.label}</span>
+                        <Badge variant="default">+{comp.pilar_maior_melhora.delta}</Badge>
+                      </div>
                     </div>
                   )}
                   {comp.pilar_maior_piora && (
                     <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Maior piora</p>
-                      <p className="font-medium">{comp.pilar_maior_piora.label}</p>
-                      <Badge variant="destructive">{comp.pilar_maior_piora.delta}</Badge>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Maior piora</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-base font-semibold text-foreground">{comp.pilar_maior_piora.label}</span>
+                        <Badge variant="destructive">{comp.pilar_maior_piora.delta}</Badge>
+                      </div>
                     </div>
                   )}
                 </div>

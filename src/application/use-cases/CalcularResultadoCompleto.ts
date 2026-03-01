@@ -31,7 +31,7 @@ export function createCalcularResultadoCompleto(repo: ConsultaRepository) {
     );
     const consultaComFase: Consulta = { ...consulta, fase_indicada: fase };
 
-    const anterior = await repo.getUltimaConsultaAntesDe(consulta.patient_id, consulta.date);
+    const anterior = await repo.getUltimaConsultaAntesDe(consulta.patient_id, consulta.id);
     let comComparacao: Consulta = consultaComFase;
     if (anterior) {
       const comparacao = compararComUltima(consultaComFase, anterior);

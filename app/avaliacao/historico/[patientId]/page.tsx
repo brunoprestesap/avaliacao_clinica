@@ -68,7 +68,7 @@ export default async function HistoricoPage({
                             </div>
                             <div>
                               <span className="font-semibold text-foreground group-hover:text-primary transition-colors block text-lg">
-                                {c.date}
+                                {c.date.split("T")[0].split("-").reverse().join("/")}
                               </span>
                             </div>
                           </div>

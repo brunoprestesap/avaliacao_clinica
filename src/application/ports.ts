@@ -6,7 +6,7 @@ export interface ConsultaRepository {
   save(consulta: Consulta): Promise<void>;
   findById(id: string): Promise<Consulta | null>;
   findByPatientIdOrderByDate(patientId: string): Promise<Consulta[]>;
-  getUltimaConsultaAntesDe(patientId: string, date: string): Promise<Consulta | null>;
+  getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null>;
 }
 
 export interface PacienteRepository {

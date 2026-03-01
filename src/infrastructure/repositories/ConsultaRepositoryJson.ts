@@ -50,9 +50,9 @@ export class ConsultaRepositoryJson implements ConsultaRepository {
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  async getUltimaConsultaAntesDe(patientId: string, date: string): Promise<Consulta | null> {
+  async getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null> {
     const list = await this.findByPatientIdOrderByDate(patientId);
-    const anteriores = list.filter((c) => c.date < date);
-    return anteriores.length > 0 ? anteriores[anteriores.length - 1]! : null;
+    const index = list.findIndex((c) => c.id === currentConsultaId);
+    return index > 0 ? list[index - 1]! : null;
   }
 }

@@ -47,7 +47,7 @@ export function NavegacaoPaginacao({
       <Button
         variant="outline"
         size="sm"
-        className="rounded-xl"
+        className="min-h-11 rounded-xl sm:min-h-8"
         disabled={!hasPrev}
         asChild={hasPrev}
       >
@@ -69,7 +69,7 @@ export function NavegacaoPaginacao({
       <Button
         variant="outline"
         size="sm"
-        className="rounded-xl"
+        className="min-h-11 rounded-xl sm:min-h-8"
         disabled={!hasNext}
         asChild={hasNext}
       >

@@ -38,6 +38,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0);
   --safe-left: env(safe-area-inset-left, 0);
   --safe-right: env(safe-area-inset-right, 0);
+  --touch-min: 44px;
   --radius: 0.75rem;
   --card-foreground: #41431B;
   --popover: #FFFFFF;
@@ -252,7 +253,12 @@ body {
 /* ===== Alerts ===== */
 /* Removed old .alert-error class since we use Sonner */
 
-/* ===== Tablet / touch: alvos de toque maiores ===== */
+/* ===== Touch: alvos de toque mínimos (mobile-first) ===== */
+button[type="submit"],
+a[href].btn-primary {
+  min-height: var(--touch-min);
+}
+
 @media (min-width: 768px) {
   button[type="submit"],
   a[href].btn-primary {

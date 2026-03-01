@@ -34,7 +34,7 @@ export function SelectLimitePacientes({
       onChange={(e) => handleChange(e.target.value)}
       id="limit-pacientes"
       aria-label="Itens por página"
-      className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+      className="min-h-10 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
     >
       {PAGINACAO_PACIENTES_LIMITES.map((n) => (
         <option key={n} value={n}>

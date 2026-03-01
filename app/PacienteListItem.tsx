@@ -30,7 +30,7 @@ export function PacienteListItem({ paciente, iniciarAvaliacao }: PacienteListIte
             type="submit"
             variant="secondary"
             size="sm"
-            className="rounded-xl font-medium shadow-sm hover:shadow transition-all"
+            className="min-h-10 rounded-xl font-medium shadow-sm hover:shadow transition-all sm:min-h-8"
           >
             Nova Avaliação
           </Button>

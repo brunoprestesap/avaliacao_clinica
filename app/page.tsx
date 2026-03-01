@@ -66,23 +66,23 @@ export default async function Home({
         {(total > 0 || currentSearch) ? (
           <div className="flex flex-col gap-4">
             <FiltroPacientes initialSearch={currentSearch} currentLimit={currentLimit} />
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold px-1 text-foreground tracking-tight">
-                Histórico por paciente
-              </h2>
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-semibold px-1 text-foreground tracking-tight">
+                  Histórico por paciente
+                </h2>
                 <span className="text-sm text-muted-foreground">
                   Mostrando {from}–{to} de {total}
                 </span>
-                <div className="flex items-center gap-2">
-                  <label htmlFor="limit-pacientes" className="text-sm font-medium text-foreground">
-                    Por página:
-                  </label>
-                  <SelectLimitePacientes
-                    currentLimit={currentLimit}
-                    currentSearch={currentSearch}
-                  />
-                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="limit-pacientes" className="text-sm font-medium text-foreground">
+                  Por página:
+                </label>
+                <SelectLimitePacientes
+                  currentLimit={currentLimit}
+                  currentSearch={currentSearch}
+                />
               </div>
             </div>
             <ul className="grid gap-3 sm:grid-cols-1">

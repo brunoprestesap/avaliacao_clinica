@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   RadarChart,
   Radar,
@@ -16,6 +17,18 @@ import {
 } from "recharts";
 import type { ResultadoCompletoDTO } from "@/src/application";
 import { PILARES_FULL_MARK } from "@/src/application";
+
+function useNarrowViewport(maxWidth = 480) {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    setNarrow(mq.matches);
+    const handler = () => setNarrow(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [maxWidth]);
+  return narrow;
+}
 
 interface RadarChartsProps {
   data: ResultadoCompletoDTO;
@@ -54,21 +67,24 @@ export function RadarEstrutural({ data }: RadarChartsProps) {
 }
 
 export function BarrasPilares({ data }: RadarChartsProps) {
+  const isNarrow = useNarrowViewport(480);
+  const tickFontSize = isNarrow ? 9 : 11;
+  const marginBottom = isNarrow ? 110 : 100;
   return (
     <div className="h-[350px] w-full sm:h-[400px] md:h-[450px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data.radar_pilares} margin={{ top: 24, right: 24, left: 0, bottom: 100 }}>
+        <BarChart data={data.radar_pilares} margin={{ top: 24, right: 24, left: 0, bottom: marginBottom }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis 
-            dataKey="subject" 
-            tick={{ fontSize: 11, fill: "var(--foreground)" }} 
-            angle={-45} 
-            textAnchor="end" 
-            height={100} 
+          <XAxis
+            dataKey="subject"
+            tick={{ fontSize: tickFontSize, fill: "var(--foreground)" }}
+            angle={-45}
+            textAnchor="end"
+            height={100}
             interval={0}
             tickMargin={15}
           />
-          <YAxis domain={[0, PILARES_FULL_MARK]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+          <YAxis domain={[0, PILARES_FULL_MARK]} tick={{ fontSize: tickFontSize, fill: "var(--muted-foreground)" }} />
           <Bar dataKey="value" name="Nota" fill={CHART_COLOR_PRIMARY} radius={[4, 4, 0, 0]} />
           <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--foreground)" }} cursor={{ fill: "var(--muted)" }} />
         </BarChart>

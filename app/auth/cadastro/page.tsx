@@ -13,7 +13,7 @@ export default async function CadastroPage({
 }) {
   const params = await searchParams;
   return (
-    <div className="min-h-[60vh] flex items-center justify-center p-4">
+    <div className="min-h-[60vh] flex items-center justify-center pt-[max(1rem,var(--safe-top))] pr-[max(1rem,var(--safe-right))] pb-[max(1.5rem,var(--safe-bottom))] pl-[max(1rem,var(--safe-left))]">
       <Card className="w-full max-w-md border-border/80 shadow-[var(--shadow-card)] overflow-hidden">
         <div className="h-1 w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden />
         <CardHeader className="pb-2 pt-6">

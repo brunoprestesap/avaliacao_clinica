@@ -58,7 +58,7 @@ export function Stepper({ currentStep }: StepperProps) {
                   </div>
                   <span
                     className={cn(
-                      "text-xs font-medium whitespace-nowrap text-center max-w-[5rem] sm:max-w-none",
+                      "text-xs font-medium text-center max-w-[5rem] whitespace-normal sm:max-w-none sm:whitespace-nowrap",
                       isCompleted || isCurrent
                         ? "text-foreground"
                         : "text-muted-foreground dark:text-muted-foreground"
@@ -70,7 +70,7 @@ export function Stepper({ currentStep }: StepperProps) {
                 {!isLast && (
                   <div
                     className={cn(
-                      "h-0.5 flex-1 min-w-2 mx-1 sm:mx-3 rounded-full transition-colors duration-200",
+                      "h-0.5 flex-1 min-w-3 mx-1 sm:mx-3 rounded-full transition-colors duration-200",
                       isCompleted ? "bg-primary" : "bg-muted/50"
                     )}
                     aria-hidden

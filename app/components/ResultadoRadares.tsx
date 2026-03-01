@@ -35,7 +35,7 @@ export function ResultadoRadares({ resultado }: ResultadoRadaresProps) {
             role="tab"
             aria-selected={tipoGrafico === "radar"}
             onClick={() => setTipoGrafico("radar")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+            className={`min-h-10 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
               tipoGrafico === "radar"
                 ? "bg-card text-foreground shadow-sm border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
@@ -48,7 +48,7 @@ export function ResultadoRadares({ resultado }: ResultadoRadaresProps) {
             role="tab"
             aria-selected={tipoGrafico === "barras"}
             onClick={() => setTipoGrafico("barras")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+            className={`min-h-10 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
               tipoGrafico === "barras"
                 ? "bg-card text-foreground shadow-sm border border-border/60"
                 : "text-muted-foreground hover:text-foreground"

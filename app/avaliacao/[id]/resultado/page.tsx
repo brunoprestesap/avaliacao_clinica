@@ -39,7 +39,7 @@ export default async function ResultadoPage({
   return (
     <div className="page-container">
       <div className="content-width-wide flex flex-col gap-6">
-        <nav className="flex flex-wrap items-center gap-3 gap-y-2 sm:gap-4" aria-label="Navegação">
+        <nav className="flex flex-wrap items-center gap-3 sm:gap-4" aria-label="Navegação">
           <Link href="/" className="link-back">
             <span aria-hidden>←</span> Voltar ao início
           </Link>

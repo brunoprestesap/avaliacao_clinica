@@ -31,7 +31,16 @@ export function createIdentificarPaciente(repo: PacienteRepository) {
       nome,
       identificador,
     };
-    await repo.save(paciente, input.userId);
-    return { paciente, criado: true };
+    try {
+      await repo.save(paciente, input.userId);
+      return { paciente, criado: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("duplicate key") || msg.includes("unique constraint")) {
+        const existenteApos = await repo.findByIdentificador(identificador);
+        if (existenteApos) return { paciente: existenteApos, criado: false };
+      }
+      throw err;
+    }
   };
 }

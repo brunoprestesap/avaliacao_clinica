@@ -1,4 +1,9 @@
 import type { AvaliacaoUseCases, ConsultaRepository, PacienteRepository } from "@/src/application/ports";
+import {
+  PAGINACAO_PACIENTES_DEFAULT_LIMIT,
+  normalizarLimite,
+  parseSearchFromQuery,
+} from "@/src/config/paginacao-pacientes";
 import { ConsultaRepositoryJson } from "./repositories/ConsultaRepositoryJson";
 import { PacienteRepositoryJson } from "./repositories/PacienteRepositoryJson";
 import { ConsultaRepositorySupabase } from "./repositories/ConsultaRepositorySupabase";
@@ -45,7 +50,16 @@ export function createAvaliacaoUseCases(): AvaliacaoUseCases {
     listarHistoricoPaciente: createListarHistoricoPaciente(consultaRepo),
     obterConsulta: createObterConsulta(consultaRepo),
     obterResultadoParaExibicao: createObterResultadoParaExibicao(consultaRepo),
-    listarPacientes: () => pacienteRepo.listarTodos(),
+    listarPacientes: async (opts) => {
+      const rawPage = opts?.page ?? 1;
+      const page =
+        Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(Number(rawPage)) : 1;
+      const limit = normalizarLimite(opts?.limit ?? PAGINACAO_PACIENTES_DEFAULT_LIMIT);
+      const offset = (page - 1) * limit;
+      const query = opts?.query != null ? parseSearchFromQuery(opts.query) : "";
+      const { pacientes, total } = await pacienteRepo.listarPaginado(offset, limit, query || undefined);
+      return { pacientes, total, page, limit };
+    },
     obterPaciente: (id) => pacienteRepo.findById(id),
   };
 }

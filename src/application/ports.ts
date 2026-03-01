@@ -9,11 +9,25 @@ export interface ConsultaRepository {
   getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null>;
 }
 
+export interface ListarPacientesInput {
+  page?: number;
+  limit?: number;
+  query?: string;
+}
+
+export interface ListarPacientesResult {
+  pacientes: Paciente[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface PacienteRepository {
   save(paciente: Paciente): Promise<void>;
   findById(id: string): Promise<Paciente | null>;
   findByIdentificador(identificador: string): Promise<Paciente | null>;
   listarTodos(): Promise<Paciente[]>;
+  listarPaginado(offset: number, limit: number, query?: string): Promise<{ pacientes: Paciente[]; total: number }>;
 }
 
 /** Porta de use cases para a camada de apresentação (app). */
@@ -27,6 +41,6 @@ export interface AvaliacaoUseCases {
   listarHistoricoPaciente(patientId: string): Promise<Consulta[]>;
   obterConsulta(consultaId: string): Promise<Consulta | null>;
   obterResultadoParaExibicao(consultaId: string): Promise<ResultadoCompletoDTO | null>;
-  listarPacientes(): Promise<Paciente[]>;
+  listarPacientes(opts?: ListarPacientesInput): Promise<ListarPacientesResult>;
   obterPaciente(patientId: string): Promise<Paciente | null>;
 }

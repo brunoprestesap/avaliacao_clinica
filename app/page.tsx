@@ -3,11 +3,38 @@ import { getAvaliacaoUseCases } from "./use-cases";
 import { iniciarAvaliacao } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ChevronRight } from "lucide-react";
+import {
+  parsePageFromQuery,
+  parseLimitFromQuery,
+  parseSearchFromQuery,
+} from "@/src/config/paginacao-pacientes";
+import { SelectLimitePacientes } from "./SelectLimitePacientes";
+import { NavegacaoPaginacao } from "./NavegacaoPaginacao";
+import { PacienteListItem } from "./PacienteListItem";
+import { FiltroPacientes } from "./FiltroPacientes";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
+}) {
+  const params = await searchParams;
+  const page = parsePageFromQuery(params.page);
+  const limit = parseLimitFromQuery(params.limit);
+  const query = parseSearchFromQuery(params.q);
+
   const uc = getAvaliacaoUseCases();
-  const pacientes = await uc.listarPacientes();
+  const { pacientes, total, page: currentPage, limit: currentLimit } = await uc.listarPacientes({
+    page,
+    limit,
+    query: query || undefined,
+  });
+
+  const currentSearch = query;
+
+  const totalPages = Math.max(1, Math.ceil(total / currentLimit));
+  const from = total === 0 ? 0 : (currentPage - 1) * currentLimit + 1;
+  const to = Math.min(currentPage * currentLimit, total);
 
   return (
     <div className="page-container">
@@ -33,48 +60,43 @@ export default async function Home() {
           </CardContent>
         </Card>
 
-        {pacientes.length > 0 ? (
+        {(total > 0 || currentSearch) ? (
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold px-1 text-foreground tracking-tight">
-              Histórico por paciente
-            </h2>
+            <FiltroPacientes initialSearch={currentSearch} currentLimit={currentLimit} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold px-1 text-foreground tracking-tight">
+                Histórico por paciente
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  Mostrando {from}–{to} de {total}
+                </span>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="limit-pacientes" className="text-sm font-medium text-foreground">
+                    Por página:
+                  </label>
+                  <SelectLimitePacientes
+                    currentLimit={currentLimit}
+                    currentSearch={currentSearch}
+                  />
+                </div>
+              </div>
+            </div>
             <ul className="grid gap-3 sm:grid-cols-1">
               {pacientes.map((p) => (
-                <li 
+                <PacienteListItem
                   key={p.id}
-                  className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] hover:bg-card/80 active:scale-[0.99] sm:p-5"
-                >
-                  <Link
-                    href={`/avaliacao/historico/${p.id}`}
-                    className="flex-1 flex flex-col gap-0.5"
-                  >
-                    <span className="font-semibold text-foreground text-base group-hover:text-primary transition-colors">
-                      {p.nome}
-                    </span>
-                    <span className="text-sm text-muted-foreground font-medium">
-                      Prontuário: {p.identificador}
-                    </span>
-                  </Link>
-                  <div className="flex items-center gap-3 ml-4">
-                    <form action={iniciarAvaliacao}>
-                      <input type="hidden" name="nome" value={p.nome} />
-                      <input type="hidden" name="identificador" value={p.identificador} />
-                      <Button 
-                        type="submit" 
-                        variant="secondary" 
-                        size="sm"
-                        className="rounded-xl font-medium shadow-sm hover:shadow transition-all"
-                      >
-                        Nova Avaliação
-                      </Button>
-                    </form>
-                    <Link href={`/avaliacao/historico/${p.id}`} tabIndex={-1} aria-hidden="true">
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                    </Link>
-                  </div>
-                </li>
+                  paciente={p}
+                  iniciarAvaliacao={iniciarAvaliacao}
+                />
               ))}
             </ul>
+            <NavegacaoPaginacao
+              currentPage={currentPage}
+              currentLimit={currentLimit}
+              totalPages={totalPages}
+              currentSearch={currentSearch}
+            />
           </div>
         ) : null}
       </main>

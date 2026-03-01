@@ -2,6 +2,8 @@ export type {
   ConsultaRepository,
   PacienteRepository,
   AvaliacaoUseCases,
+  ListarPacientesInput,
+  ListarPacientesResult,
 } from "./ports";
 
 export type { ResultadoCompletoDTO } from "./use-cases/CalcularResultadoCompleto";

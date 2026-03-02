@@ -2,10 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { excluirAvaliacao } from "@/app/actions";
-import { ArrowLeft, Calendar, FileText, Activity, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { HistoricoConsultaItem } from "../HistoricoConsultaItem";
 
 export default async function HistoricoPage({
   params,
@@ -65,54 +64,13 @@ export default async function HistoricoPage({
                 </div>
               ) : (
                 <ul className="grid gap-4">
-                  {consultasRecentesPrimeiro.map((c) => (
-                    <li key={c.id} className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-4">
-                      <Link
-                        href={`/avaliacao/${c.id}/resultado`}
-                        className="group flex-1 block rounded-2xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] active:scale-[0.99]"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                              <Calendar className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-foreground group-hover:text-primary transition-colors block text-lg">
-                                {c.date.split("T")[0].split("-").reverse().join("/")}
-                              </span>
-                            </div>
-                          </div>
-                          {c.clinico && (
-                            <div className="flex flex-wrap items-center gap-3 mt-2 sm:mt-0">
-                              <Badge variant="outline" className="px-3 py-1 flex items-center gap-1.5 bg-background text-sm font-medium border-border/80">
-                                <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                                Clínico: {c.clinico.score_total}
-                              </Badge>
-                              {c.estrutura != null && (
-                                <Badge variant="outline" className="px-3 py-1 flex items-center gap-1.5 bg-background text-sm font-medium border-border/80">
-                                  Estrutural: {c.estrutura.media.toFixed(2)}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                      {!c.clinico && (
-                        <form action={excluirAvaliacao} className="flex sm:items-center">
-                          <input type="hidden" name="consultaId" value={c.id} />
-                          <input type="hidden" name="patientId" value={patientId} />
-                          <Button
-                            type="submit"
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive h-full sm:h-auto min-h-11 rounded-xl"
-                          >
-                            <Trash2 className="h-4 w-4 sm:mr-1.5" />
-                            <span className="hidden sm:inline">Excluir</span>
-                          </Button>
-                        </form>
-                      )}
-                    </li>
+                  {consultasRecentesPrimeiro.map((consulta) => (
+                    <HistoricoConsultaItem
+                      key={consulta.id}
+                      consulta={consulta}
+                      patientId={patientId}
+                      onExcluir={excluirAvaliacao}
+                    />
                   ))}
                 </ul>
               )}

@@ -93,3 +93,9 @@ export const VARIACAO_LABELS: Record<VariacaoComparacao, string> = {
   ESTAVEL: "Estável",
   PIORA_RELEVANTE: "Piora relevante",
 };
+
+/** Nome do programa de avaliação (matriz oficial) para uso em relatórios e telas. */
+export const NOME_PROGRAMA_AVALIACAO = "Matriz FASE";
+
+/** Descrição das fases do programa para exibição (Integral, Núcleo, Essência). */
+export const DESCRICAO_FASES_PROGRAMA = "Integral, Núcleo, Essência";

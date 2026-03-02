@@ -7,6 +7,7 @@ export interface ConsultaRepository {
   findById(id: string): Promise<Consulta | null>;
   findByPatientIdOrderByDate(patientId: string): Promise<Consulta[]>;
   getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null>;
+  delete(id: string): Promise<void>;
 }
 
 export interface ListarPacientesInput {
@@ -43,4 +44,5 @@ export interface AvaliacaoUseCases {
   obterResultadoParaExibicao(consultaId: string): Promise<ResultadoCompletoDTO | null>;
   listarPacientes(opts?: ListarPacientesInput): Promise<ListarPacientesResult>;
   obterPaciente(patientId: string): Promise<Paciente | null>;
+  excluirAvaliacaoEmBranco(consultaId: string): Promise<string>;
 }

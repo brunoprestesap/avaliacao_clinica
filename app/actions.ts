@@ -9,6 +9,11 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getSession } from "./auth";
 import { getAvaliacaoUseCases } from "./use-cases";
+import {
+  getUnlockPasswordHash,
+  setUnlockPassword,
+  verifyUnlockPassword,
+} from "@/src/infrastructure/unlockPassword";
 import type { ItensClinicos, PilaresEstruturais } from "@/src/application";
 import type { ValorEscalaClinica, ValorEscalaEstrutural } from "@/src/domain";
 import { ITENS_CLINICOS, PILARES } from "@/src/application";
@@ -117,12 +122,48 @@ export async function salvarEstruturaForm(formData: FormData) {
   }
 }
 
+const MIN_SENHA_DESBLOQUEIO = 4;
+
 export async function desbloquearMedico(formData: FormData) {
   const consultaId = formData.get("consultaId");
   const senha = (formData.get("senha") as string)?.trim() ?? "";
   if (!isConsultaIdValido(consultaId)) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
+
+  const useSupabase = process.env.PERSISTENCE === "supabase";
+  if (useSupabase) {
+    const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+    if (supabase && user) {
+      const uc = getAvaliacaoUseCases(supabase);
+      const consulta = await uc.obterConsulta(consultaId);
+      if (!consulta) {
+        redirect("/avaliacao/nova");
+      }
+      if (!consulta.estrutura) {
+        redirect(pathAvaliacao(consultaId, "bloqueado"));
+      }
+      const stored = await getUnlockPasswordHash(supabase, user.id);
+      if (!stored) {
+        const nextUrl = encodeURIComponent(pathAvaliacao(consultaId, "desbloquear"));
+        redirect(`/configuracoes?error=${encodeURIComponent("Defina sua senha de desbloqueio primeiro.")}&next=${nextUrl}`);
+      }
+      if (!verifyUnlockPassword(senha, stored.hash, stored.salt)) {
+        redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
+      }
+      const cookieStore = await cookies();
+      cookieStore.set(COOKIE_MEDICO, consultaId, {
+        path: pathAvaliacao(consultaId),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 15, // 15 min
+      });
+      redirect(pathAvaliacao(consultaId, "gerar"));
+    }
+  }
+
+  // Fallback: modo JSON ou sem Supabase — senha global
   const senhaEsperada = process.env.SENHA_MEDICO ?? "";
   if (!senhaEsperada || senha !== senhaEsperada) {
     redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
@@ -136,6 +177,39 @@ export async function desbloquearMedico(formData: FormData) {
     maxAge: 60 * 15, // 15 min
   });
   redirect(pathAvaliacao(consultaId, "gerar"));
+}
+
+export async function definirSenhaDesbloqueio(formData: FormData) {
+  const senha = (formData.get("senha") as string)?.trim() ?? "";
+  const confirmacao = (formData.get("confirmacao") as string)?.trim() ?? "";
+  const nextUrl = (formData.get("next") as string)?.trim() ?? "";
+  if (!senha || !confirmacao) {
+    redirect("/configuracoes?error=" + encodeURIComponent("Preencha a senha e a confirmação."));
+  }
+  if (senha.length < MIN_SENHA_DESBLOQUEIO) {
+    redirect(
+      "/configuracoes?error=" +
+        encodeURIComponent(`Senha deve ter no mínimo ${MIN_SENHA_DESBLOQUEIO} caracteres.`)
+    );
+  }
+  if (senha !== confirmacao) {
+    redirect("/configuracoes?error=" + encodeURIComponent("As senhas não coincidem."));
+  }
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  if (process.env.PERSISTENCE !== "supabase" || !supabase || !user) {
+    redirect("/configuracoes?error=" + encodeURIComponent("Configuração disponível apenas com login."));
+  }
+  try {
+    await setUnlockPassword(supabase, user.id, senha);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    const msg = e instanceof Error ? e.message : "Erro ao salvar senha.";
+    redirect("/configuracoes?error=" + encodeURIComponent(msg));
+  }
+  if (nextUrl && nextUrl.startsWith("/")) {
+    redirect(nextUrl);
+  }
+  redirect("/configuracoes?success=" + encodeURIComponent("Senha de desbloqueio definida."));
 }
 
 export async function gerarResultados(formData: FormData) {
@@ -189,6 +263,25 @@ export async function salvarImpressaoEFinalizar(formData: FormData) {
     if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "Erro ao salvar.";
     redirect(`${pathAvaliacao(consultaId, "resultado")}?error=${encodeURIComponent(msg)}`);
+  }
+}
+
+export async function excluirAvaliacao(formData: FormData) {
+  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+
+  const consultaId = formData.get("consultaId");
+  const patientId = (formData.get("patientId") as string)?.trim() ?? "";
+  if (!isConsultaIdValido(consultaId)) {
+    redirect(patientId ? `/avaliacao/historico/${patientId}?error=` + encodeURIComponent("Consulta não identificada.") : "/");
+  }
+  try {
+    const returnedPatientId = await uc.excluirAvaliacaoEmBranco(consultaId);
+    redirect(`/avaliacao/historico/${returnedPatientId}`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    const msg = e instanceof Error ? e.message : "Não foi possível excluir.";
+    redirect(`/avaliacao/historico/${patientId}?error=${encodeURIComponent(msg)}`);
   }
 }
 

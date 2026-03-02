@@ -53,7 +53,7 @@ export default async function ResultadoPage({
         </nav>
 
         {!jaSalvou && (
-          <div className="mx-auto w-full max-w-2xl px-4 mt-2">
+          <div className="mx-auto w-full max-w-[50.4rem] px-4 mt-2">
             <Stepper currentStep="resultado" />
           </div>
         )}

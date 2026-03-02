@@ -23,7 +23,7 @@ export default async function BloqueadoPage({
 
   return (
     <div className="page-container flex min-h-[80vh] flex-col items-center justify-center">
-      <div className="content-width-medium flex flex-col items-center text-center max-w-sm">
+      <div className="content-width-medium flex flex-col items-center text-center max-w-[28.8rem]">
         <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-8 shadow-[var(--shadow-card)] border border-primary/20">
           <ShieldAlert className="h-12 w-12" />
         </div>
@@ -33,7 +33,7 @@ export default async function BloqueadoPage({
         <p className="mt-4 text-base text-muted-foreground leading-relaxed">
           O preenchimento pelo paciente foi concluído. O médico deve desbloquear a tela para continuar a avaliação.
         </p>
-        <Button asChild variant="outline" className="mt-10 h-12 w-full rounded-xl text-base font-medium max-w-xs">
+        <Button asChild variant="outline" className="mt-10 h-12 w-full rounded-xl text-base font-medium max-w-[24rem]">
           <Link href={`/avaliacao/${consultaId}/desbloquear`}>
             Sou o médico
           </Link>

@@ -46,7 +46,7 @@ const tooltipStyle = {
 
 export function RadarEstrutural({ data }: RadarChartsProps) {
   return (
-    <div className="h-[280px] w-full sm:h-[320px] md:h-[380px]">
+    <div className="h-[280px] w-full sm:h-[320px] md:h-[380px] lg:h-[420px]">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data.radar_pilares} cx="50%" cy="50%" outerRadius="70%">
           <PolarGrid stroke="var(--border)" />
@@ -71,7 +71,7 @@ export function BarrasPilares({ data }: RadarChartsProps) {
   const tickFontSize = isNarrow ? 9 : 11;
   const marginBottom = isNarrow ? 110 : 100;
   return (
-    <div className="h-[350px] w-full sm:h-[400px] md:h-[450px]">
+    <div className="h-[350px] w-full sm:h-[400px] md:h-[450px] lg:h-[480px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data.radar_pilares} margin={{ top: 24, right: 24, left: 0, bottom: marginBottom }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

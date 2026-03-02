@@ -29,7 +29,10 @@ function consultaCompleta(overrides: Partial<Consulta> = {}): Consulta {
 describe("ObterResultadoParaExibicao", () => {
   it("retorna DTO quando consulta tem clinico, estrutura e fase_indicada", async () => {
     const consulta = consultaCompleta();
-    const repo = { findById: vi.fn().mockResolvedValue(consulta) };
+    const repo = {
+      findById: vi.fn().mockResolvedValue(consulta),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(null),
+    };
     const obter = createObterResultadoParaExibicao(repo as never);
     const result = await obter("c1");
     expect(result).not.toBeNull();
@@ -41,7 +44,10 @@ describe("ObterResultadoParaExibicao", () => {
   });
 
   it("retorna null quando consulta não existe", async () => {
-    const repo = { findById: vi.fn().mockResolvedValue(null) };
+    const repo = {
+      findById: vi.fn().mockResolvedValue(null),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(null),
+    };
     const obter = createObterResultadoParaExibicao(repo as never);
     const result = await obter("inexistente");
     expect(result).toBeNull();
@@ -49,7 +55,10 @@ describe("ObterResultadoParaExibicao", () => {
 
   it("retorna null quando consulta não tem clinico", async () => {
     const consulta = consultaCompleta({ clinico: undefined });
-    const repo = { findById: vi.fn().mockResolvedValue(consulta) };
+    const repo = {
+      findById: vi.fn().mockResolvedValue(consulta),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(null),
+    };
     const obter = createObterResultadoParaExibicao(repo as never);
     const result = await obter("c1");
     expect(result).toBeNull();
@@ -57,7 +66,10 @@ describe("ObterResultadoParaExibicao", () => {
 
   it("retorna null quando consulta não tem estrutura", async () => {
     const consulta = consultaCompleta({ estrutura: undefined });
-    const repo = { findById: vi.fn().mockResolvedValue(consulta) };
+    const repo = {
+      findById: vi.fn().mockResolvedValue(consulta),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(null),
+    };
     const obter = createObterResultadoParaExibicao(repo as never);
     const result = await obter("c1");
     expect(result).toBeNull();
@@ -65,9 +77,38 @@ describe("ObterResultadoParaExibicao", () => {
 
   it("retorna null quando consulta não tem fase_indicada", async () => {
     const consulta = consultaCompleta({ fase_indicada: undefined });
-    const repo = { findById: vi.fn().mockResolvedValue(consulta) };
+    const repo = {
+      findById: vi.fn().mockResolvedValue(consulta),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(null),
+    };
     const obter = createObterResultadoParaExibicao(repo as never);
     const result = await obter("c1");
     expect(result).toBeNull();
+  });
+
+  it("preenche comparacao na exibição quando consulta não tem comparacao mas existe anterior completa", async () => {
+    const consulta = consultaCompleta({ comparacao: undefined });
+    const anterior = consultaCompleta({
+      id: "c0",
+      date: "2025-01-10",
+      clinico: {
+        ...consulta.clinico!,
+        score_total: 5,
+      },
+      estrutura: {
+        ...consulta.estrutura!,
+        media: 1.5,
+      },
+    });
+    const repo = {
+      findById: vi.fn().mockResolvedValue(consulta),
+      getUltimaConsultaAntesDe: vi.fn().mockResolvedValue(anterior),
+    };
+    const obter = createObterResultadoParaExibicao(repo as never);
+    const result = await obter("c1");
+    expect(result).not.toBeNull();
+    expect(result!.consulta.comparacao).not.toBeUndefined();
+    expect(result!.consulta.comparacao!.delta_clinico).toBe(5);
+    expect(result!.consulta.comparacao!.delta_estrutura).toBeCloseTo(0.5);
   });
 });

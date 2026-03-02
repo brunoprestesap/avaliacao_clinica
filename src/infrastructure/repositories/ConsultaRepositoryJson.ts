@@ -53,6 +53,18 @@ export class ConsultaRepositoryJson implements ConsultaRepository {
   async getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null> {
     const list = await this.findByPatientIdOrderByDate(patientId);
     const index = list.findIndex((c) => c.id === currentConsultaId);
-    return index > 0 ? list[index - 1]! : null;
+    if (index <= 0) return null;
+    for (let i = index - 1; i >= 0; i--) {
+      const c = list[i]!;
+      if (c.clinico && c.estrutura) return c;
+    }
+    return null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const list = await readConsultas();
+    const filtered = list.filter((c) => c.id !== id);
+    if (filtered.length === list.length) return;
+    await writeConsultas(filtered);
   }
 }

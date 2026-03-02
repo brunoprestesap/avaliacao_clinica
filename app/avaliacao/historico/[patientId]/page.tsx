@@ -2,16 +2,21 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/app/auth";
 import { getAvaliacaoUseCases } from "@/app/use-cases";
-import { ArrowLeft, Calendar, FileText, Activity } from "lucide-react";
+import { excluirAvaliacao } from "@/app/actions";
+import { ArrowLeft, Calendar, FileText, Activity, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default async function HistoricoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ patientId: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { patientId } = await params;
+  const { error: errorMessage } = await searchParams;
   const { supabase } = await getSession({ redirectIfUnauthenticated: true });
   const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
   const [paciente, consultas] = await Promise.all([
@@ -48,6 +53,11 @@ export default async function HistoricoPage({
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 Histórico de Consultas
               </h3>
+              {errorMessage ? (
+                <p className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {errorMessage}
+                </p>
+              ) : null}
               {consultasRecentesPrimeiro.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-12 px-4 text-center">
                   <Calendar className="h-8 w-8 text-muted-foreground/50 mb-3" />
@@ -58,10 +68,10 @@ export default async function HistoricoPage({
               ) : (
                 <ul className="grid gap-4">
                   {consultasRecentesPrimeiro.map((c) => (
-                    <li key={c.id}>
+                    <li key={c.id} className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-4">
                       <Link
                         href={`/avaliacao/${c.id}/resultado`}
-                        className="group block rounded-2xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] active:scale-[0.99]"
+                        className="group flex-1 block rounded-2xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)] active:scale-[0.99]"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="flex items-center gap-3">
@@ -89,6 +99,21 @@ export default async function HistoricoPage({
                           )}
                         </div>
                       </Link>
+                      {!c.clinico && (
+                        <form action={excluirAvaliacao} className="flex sm:items-center">
+                          <input type="hidden" name="consultaId" value={c.id} />
+                          <input type="hidden" name="patientId" value={patientId} />
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive h-full sm:h-auto min-h-11 rounded-xl"
+                          >
+                            <Trash2 className="h-4 w-4 sm:mr-1.5" />
+                            <span className="hidden sm:inline">Excluir</span>
+                          </Button>
+                        </form>
+                      )}
                     </li>
                   ))}
                 </ul>

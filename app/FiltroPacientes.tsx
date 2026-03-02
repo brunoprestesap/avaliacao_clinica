@@ -22,7 +22,7 @@ export function FiltroPacientes({ initialSearch, currentLimit }: FiltroPacientes
         defaultValue={initialSearch}
         placeholder="Nome ou prontuário"
         aria-label="Buscar por nome ou prontuário"
-        className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="flex-1 min-w-0 min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
       <button
         type="submit"

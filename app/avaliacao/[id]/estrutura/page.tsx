@@ -35,7 +35,7 @@ export default async function EstruturaPage({
 
   return (
     <div className="page-container">
-      <div className="content-width-medium flex flex-col gap-6">
+      <div className="content-width-wide flex flex-col gap-6">
         <ErrorToast error={error} />
         <Link href={`/avaliacao/${consultaId}/clinico`} className="link-back inline-flex items-center w-fit mb-2">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Clínica

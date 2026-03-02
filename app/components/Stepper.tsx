@@ -70,7 +70,7 @@ export function Stepper({ currentStep }: StepperProps) {
                 {!isLast && (
                   <div
                     className={cn(
-                      "h-0.5 flex-1 min-w-3 mx-1 sm:mx-3 rounded-full transition-colors duration-200",
+                      "h-0.5 flex-1 min-w-3 mx-1 sm:mx-3 md:mx-4 rounded-full transition-colors duration-200",
                       isCompleted ? "bg-primary" : "bg-muted/50"
                     )}
                     aria-hidden

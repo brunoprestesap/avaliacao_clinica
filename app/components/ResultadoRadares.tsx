@@ -58,7 +58,7 @@ export function ResultadoRadares({ resultado }: ResultadoRadaresProps) {
           </button>
         </div>
       </div>
-      <Card className="overflow-hidden p-2 sm:p-4 border-border/80 shadow-[var(--shadow-card)] rounded-2xl">
+      <Card className="overflow-hidden p-2 sm:p-4 md:p-4 border-border/80 shadow-[var(--shadow-card)] rounded-2xl">
         <CardContent className="p-0">
           {tipoGrafico === "radar" ? (
             <RadarEstrutural data={resultado} />

@@ -14,7 +14,7 @@ export default async function LoginPage({
   const { error } = await searchParams;
   return (
     <div className="min-h-[60vh] flex items-center justify-center pt-[max(1rem,var(--safe-top))] pr-[max(1rem,var(--safe-right))] pb-[max(1.5rem,var(--safe-bottom))] pl-[max(1rem,var(--safe-left))]">
-      <Card className="w-full max-w-md border-border/80 shadow-[var(--shadow-card)] overflow-hidden">
+      <Card className="w-full max-w-[33.6rem] sm:max-w-[38.4rem] border-border/80 shadow-[var(--shadow-card)] overflow-hidden">
         <div className="h-1 w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden />
         <CardHeader className="pb-2 pt-6">
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">

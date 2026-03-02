@@ -19,6 +19,7 @@
   --btn-primary-text: #FFFFFF;
   --accent: #AEB784;
   --accent-hover: #9ca576;
+  --selection: #6B7C3A;
   --focus-ring: #41431B;
   --error-bg: #fef2f2;
   --error-border: #fecaca;
@@ -67,7 +68,9 @@
   --sidebar-ring: #41431B;
 }
 
+/* Breakpoints afinados para tablet (ex.: Galaxy Tab S6 – viewport ~800px retrato / ~1280px paisagem) */
 @theme inline {
+  --breakpoint-tablet: 50rem; /* 800px */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
@@ -90,6 +93,7 @@
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-selection: var(--selection);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -129,6 +133,7 @@
     --btn-primary-text: #17180a;
     --accent: #41431B;
     --accent-hover: #565924;
+    --selection: #9ca576;
     --focus-ring: #AEB784;
     --error-bg: oklch(0.22 0.04 25);
     --error-border: oklch(0.4 0.1 25);
@@ -168,31 +173,50 @@ body {
   }
 }
 
+@media (min-width: 768px) {
+  .page-container {
+    padding: max(1.75rem, var(--safe-top)) max(1.75rem, var(--safe-left)) max(2.25rem, var(--safe-bottom)) max(1.75rem, var(--safe-right));
+  }
+}
+
 @media (min-width: 1024px) {
   .page-container {
     padding: 2rem max(2rem, var(--safe-left)) 2.5rem max(2rem, var(--safe-right));
   }
 }
 
+/* Larguras +20% para melhor aproveitamento da tela no tablet */
 .content-width-narrow {
   width: 100%;
-  max-width: 28rem;
+  max-width: 33.6rem;
   margin-left: auto;
   margin-right: auto;
 }
 
+@media (min-width: 640px) {
+  .content-width-narrow {
+    max-width: 43.2rem;
+  }
+}
+
 .content-width-medium {
   width: 100%;
-  max-width: 42rem;
+  max-width: 50.4rem;
   margin-left: auto;
   margin-right: auto;
 }
 
 .content-width-wide {
   width: 100%;
-  max-width: 48rem;
+  max-width: 57.6rem;
   margin-left: auto;
   margin-right: auto;
+}
+
+@media (min-width: 768px) {
+  .content-width-wide {
+    max-width: 67.2rem;
+  }
 }
 
 /* ===== Cards ===== */
@@ -282,6 +306,7 @@ a[href].btn-primary {
   --muted-foreground: #E3DBBB;
   --accent: #41431B;
   --accent-foreground: #F8F3E1;
+  --selection: #9ca576;
   --destructive: oklch(0.55 0.22 25);
   --border: #41431B;
   --input: #232510;

@@ -20,6 +20,7 @@ import { createCalcularResultadoCompleto } from "@/src/application/use-cases/Cal
 import { createListarHistoricoPaciente } from "@/src/application/use-cases/ListarHistoricoPaciente";
 import { createObterConsulta } from "@/src/application/use-cases/ObterConsulta";
 import { createObterResultadoParaExibicao } from "@/src/application/use-cases/ObterResultadoParaExibicao";
+import { createExcluirAvaliacaoEmBranco } from "@/src/application/use-cases/ExcluirAvaliacaoEmBranco";
 
 const useSupabase = process.env.PERSISTENCE === "supabase";
 
@@ -59,6 +60,7 @@ export function createAvaliacaoUseCases(supabase?: SupabaseClient<Database>): Av
     listarHistoricoPaciente: createListarHistoricoPaciente(consultaRepo),
     obterConsulta: createObterConsulta(consultaRepo),
     obterResultadoParaExibicao: createObterResultadoParaExibicao(consultaRepo),
+    excluirAvaliacaoEmBranco: createExcluirAvaliacaoEmBranco(consultaRepo),
     listarPacientes: async (opts) => {
       const rawPage = opts?.page ?? 1;
       const page =

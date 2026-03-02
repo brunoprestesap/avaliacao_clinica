@@ -18,11 +18,18 @@ export interface PacienteRow {
   user_id: string | null;
 }
 
+export interface ProfileRow {
+  user_id: string;
+  unlock_password_hash: string;
+  unlock_password_salt: string;
+}
+
 export interface Database {
   public: {
     Tables: {
       consultas: { Row: ConsultaRow; Insert: ConsultaRow; Update: Partial<ConsultaRow> };
       pacientes: { Row: PacienteRow; Insert: PacienteRow; Update: Partial<PacienteRow> };
+      profiles: { Row: ProfileRow; Insert: ProfileRow; Update: Partial<ProfileRow> };
     };
   };
 }

@@ -41,14 +41,19 @@ export default async function RootLayout({
         {user && (
           <header className="border-b border-border/80 bg-card/80 backdrop-blur-sm sticky top-0 z-40">
             <div className="content-width-narrow mx-auto flex h-14 items-center justify-between px-4">
-              <span className="text-sm text-muted-foreground truncate max-w-[140px] min-[360px]:max-w-[200px] sm:max-w-xs" title={user.email}>
+              <span className="text-sm text-muted-foreground truncate max-w-[140px] min-[360px]:max-w-[200px] sm:max-w-xs md:max-w-sm" title={user.email}>
                 {user.email}
               </span>
-              <form action={logoutAction}>
-                <Button type="submit" variant="ghost" size="sm" className="min-h-10 min-w-10 text-muted-foreground hover:text-foreground">
-                  Sair
+              <div className="flex items-center gap-1">
+                <Button asChild variant="ghost" size="sm" className="min-h-10 text-muted-foreground hover:text-foreground">
+                  <a href="/configuracoes">Configurações</a>
                 </Button>
-              </form>
+                <form action={logoutAction}>
+                  <Button type="submit" variant="ghost" size="sm" className="min-h-10 min-w-10 text-muted-foreground hover:text-foreground">
+                    Sair
+                  </Button>
+                </form>
+              </div>
             </div>
           </header>
         )}

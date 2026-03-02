@@ -41,14 +41,14 @@ export default async function GerarPage({
             <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
               Gerar Resultados
             </CardTitle>
-            <CardDescription className="text-base max-w-sm mx-auto leading-relaxed text-muted-foreground">
+            <CardDescription className="text-base max-w-[28.8rem] mx-auto leading-relaxed text-muted-foreground">
               O sistema irá calcular o score clínico, a média estrutural, a fase indicada e a comparação com a última consulta.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={gerarResultados} className="mt-4">
               <input type="hidden" name="consultaId" value={consultaId} />
-              <SubmitButton label="Analisar e Gerar Relatório" className="h-14 w-full rounded-xl text-lg font-semibold sm:max-w-xs mx-auto shadow-sm hover:shadow-md transition-shadow" />
+              <SubmitButton label="Analisar e Gerar Relatório" className="h-14 w-full rounded-xl text-lg font-semibold sm:max-w-[24rem] mx-auto shadow-sm hover:shadow-md transition-shadow" />
             </form>
           </CardContent>
         </Card>

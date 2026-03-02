@@ -30,7 +30,7 @@ export class PacienteRepositorySupabase implements PacienteRepository {
 
   async save(paciente: Paciente, ownerId?: string): Promise<void> {
     const resolvedOwnerId = ownerId ?? this.userId;
-    const row = {
+    const row: Database["public"]["Tables"]["pacientes"]["Insert"] = {
       id: paciente.id,
       nome: paciente.nome,
       identificador: paciente.identificador,

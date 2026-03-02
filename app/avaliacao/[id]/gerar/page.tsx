@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/app/auth";
-import { getAvaliacaoUseCases } from "@/app/use-cases";
+import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { gerarResultados } from "../../../actions";
 import { ErrorToast } from "../../../components/ErrorToast";
 import { SubmitButton } from "../../../components/SubmitButton";
@@ -16,11 +15,7 @@ export default async function GerarPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

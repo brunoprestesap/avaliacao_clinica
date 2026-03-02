@@ -11,6 +11,11 @@ export interface ConsultaRow {
   comparacao: ComparacaoResultado | null;
 }
 
+/** Insert aceita fase_indicada como número (persistido como 1/2/4) ou string. */
+export type ConsultaInsert = Omit<ConsultaRow, "fase_indicada"> & {
+  fase_indicada?: string | number | null;
+};
+
 export interface PacienteRow {
   id: string;
   nome: string;
@@ -54,7 +59,7 @@ export interface AccountUnlockTokenRow {
 export interface Database {
   public: {
     Tables: {
-      consultas: { Row: ConsultaRow; Insert: ConsultaRow; Update: Partial<ConsultaRow> };
+      consultas: { Row: ConsultaRow; Insert: ConsultaInsert; Update: Partial<ConsultaRow> };
       pacientes: { Row: PacienteRow; Insert: PacienteRow; Update: Partial<PacienteRow> };
       profiles: { Row: ProfileRow; Insert: ProfileRow; Update: Partial<ProfileRow> };
       users: {

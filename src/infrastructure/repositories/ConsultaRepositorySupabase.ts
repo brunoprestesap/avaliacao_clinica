@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ConsultaRepository } from "@/src/application/ports";
 import type { Consulta, FaseIndicadaLabel } from "@/src/domain";
-import type { Database } from "@/src/infrastructure/supabase/database.types";
+import type { Database, ConsultaInsert } from "@/src/infrastructure/supabase/database.types";
 
 const TABLE = "consultas";
 
@@ -62,13 +62,13 @@ export class ConsultaRepositorySupabase implements ConsultaRepository {
 
     const faseValue =
       consulta.fase_indicada != null ? FASE_TO_NUMBER[consulta.fase_indicada] : null;
-    const row = {
+    const row: ConsultaInsert = {
       id: consulta.id,
       patient_id: consulta.patient_id,
       date: consulta.date,
       clinico: consulta.clinico ?? null,
       estrutura: consulta.estrutura ?? null,
-      fase_indicada: faseValue as string | number | null,
+      fase_indicada: faseValue,
       impressao_clinica: consulta.impressao_clinica ?? null,
       comparacao: consulta.comparacao ?? null,
     };

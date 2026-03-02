@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSession } from "@/app/auth";
+import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { getUnlockPasswordHash } from "@/src/infrastructure/unlockPassword";
 import { definirSenhaDesbloqueio } from "../actions";
 import { ErrorToast } from "@/app/components/ErrorToast";
@@ -18,11 +18,11 @@ export default async function ConfiguracoesPage({
   searchParams: Promise<{ error?: string; success?: string; next?: string }>;
 }) {
   const params = await searchParams;
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const { user, supabaseClient } = await getAuthenticatedUseCases();
 
   let senhaDefinida = false;
-  if (process.env.PERSISTENCE === "supabase" && supabase && user) {
-    const stored = await getUnlockPasswordHash(supabase, user.id);
+  if (process.env.PERSISTENCE === "supabase") {
+    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
     senhaDefinida = stored != null;
   }
 

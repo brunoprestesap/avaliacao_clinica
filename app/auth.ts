@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import type { Session } from "next-auth";
 import { authOptions } from "@/app/auth-options";
 import { getSupabase } from "@/src/infrastructure/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -10,12 +11,20 @@ export type AuthUser = {
   email?: string;
 };
 
-export async function getSession(options?: {
+export type SessionContext = {
+  session: Session;
+  user: AuthUser;
+  supabaseClient: SupabaseClient<Database>;
+};
+
+/**
+ * Retorna o contexto de sessão autenticada com tipagem forte.
+ * O isolamento entre usuários é feito via `userId` nos repositórios (ConsultaRepositorySupabase, PacienteRepositorySupabase),
+ * não via RLS por JWT — o client Supabase no servidor é service role.
+ */
+export async function getSessionContext(options?: {
   redirectIfUnauthenticated?: boolean;
-}): Promise<{
-  supabase: SupabaseClient<Database> | null;
-  user: AuthUser | null;
-}> {
+}): Promise<SessionContext | null> {
   const session = await getServerSession(authOptions);
   const user: AuthUser | null = session?.user?.id
     ? {
@@ -28,14 +37,26 @@ export async function getSession(options?: {
     redirect("/login");
   }
 
-  if (!user) {
-    return { supabase: null, user: null };
+  if (!session || !user) {
+    return null;
   }
 
-  // Importante: Supabase pode estar configurado com "JWT Signing Keys" (ES256/RS256),
-  // onde a chave privada não é extraível — então não é possível "mintar" JWTs aqui
-  // usando `SUPABASE_JWT_SECRET`. Para manter o app funcional, usamos o client
-  // com service role no server e aplicamos o escopo por `user_id` nos repositórios.
-  const supabase: SupabaseClient<Database> = getSupabase();
-  return { supabase, user };
+  const supabaseClient = getSupabase();
+  return { session, user, supabaseClient };
+}
+
+export async function getSession(options?: {
+  redirectIfUnauthenticated?: boolean;
+}): Promise<{
+  supabase: SupabaseClient<Database> | null;
+  user: AuthUser | null;
+}> {
+  const ctx = await getSessionContext(options);
+  if (!ctx) {
+    return { supabase: null, user: null };
+  }
+  return {
+    supabase: ctx.supabaseClient,
+    user: ctx.user,
+  };
 }

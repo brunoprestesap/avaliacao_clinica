@@ -1,3 +1,8 @@
+/**
+ * Senha de desbloqueio da avaliação (médico).
+ * Usada na tela "desbloquear" para permitir ao médico gerar o resultado após o paciente preencher.
+ * Não confundir com desbloqueio de conta (auth), que usa account_unlock_tokens e auth-actions.
+ */
 import { scryptSync, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, ProfileRow } from "@/src/infrastructure/supabase/database.types";
@@ -7,6 +12,7 @@ const SCRYPT_KEYLEN = 64;
 const SCRYPT_N = 16384;
 const SALT_BYTES = 16;
 
+/** Hash e salt da senha de desbloqueio do médico (tela de gerar resultado). */
 export interface UnlockPasswordStored {
   hash: string;
   salt: string;
@@ -21,6 +27,7 @@ function isTableNotFoundError(message: string): boolean {
   );
 }
 
+/** Obtém hash/salt da senha de desbloqueio do médico (profiles) para o usuário. */
 export async function getUnlockPasswordHash(
   supabase: SupabaseClient<Database>,
   userId: string
@@ -39,21 +46,20 @@ export async function getUnlockPasswordHash(
   return { hash: row.unlock_password_hash, salt: row.unlock_password_salt };
 }
 
+/** Define a senha de desbloqueio do médico (Configurações). */
 export async function setUnlockPassword(
   supabase: SupabaseClient<Database>,
   userId: string,
   senhaPlain: string
 ): Promise<void> {
   const salt = randomBytes(SALT_BYTES).toString("hex");
-  const hash = hashPassword(senhaPlain, salt);
-  const row: ProfileRow = {
+  const storedHash = hashPassword(senhaPlain, salt);
+  const row: Database["public"]["Tables"]["profiles"]["Insert"] = {
     user_id: userId,
-    unlock_password_hash: hash,
+    unlock_password_hash: storedHash,
     unlock_password_salt: salt,
   };
-  // Table "profiles" is in database.types.ts; Supabase client may not infer it until types are regenerated
-  const table = supabase.from(TABLE) as unknown as { upsert: (values: ProfileRow, options?: { onConflict?: string }) => Promise<{ error: { message: string } | null }> };
-  const { error } = await table.upsert(row, { onConflict: "user_id" });
+  const { error } = await supabase.from(TABLE).upsert(row as never, { onConflict: "user_id" });
   if (error) {
     if (isTableNotFoundError(error.message)) {
       throw new Error(
@@ -69,6 +75,7 @@ export function hashPassword(senhaPlain: string, saltHex: string): string {
   return scryptSync(senhaPlain, salt, SCRYPT_KEYLEN, { N: SCRYPT_N }).toString("hex");
 }
 
+/** Verifica a senha de desbloqueio do médico (tela desbloquear → gerar). */
 export function verifyUnlockPassword(
   senhaPlain: string,
   storedHash: string,

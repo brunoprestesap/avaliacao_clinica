@@ -3,6 +3,8 @@
  * Configure RESEND_API_KEY no .env para produção. Sem chave, em desenvolvimento apenas loga o link.
  */
 
+import type { AuthEmailSender } from "@/src/application/auth/ports";
+
 const FROM_EMAIL =
   process.env.EMAIL_FROM ?? "noreply@example.com";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -24,6 +26,12 @@ export async function sendUnlockAccountEmail(
   const body = `Sua conta foi bloqueada após várias tentativas de login. Acesse o link abaixo para desbloquear (válido por 24 horas):\n\n${unlockLink}\n\nSe não foi você, altere sua senha após desbloquear.`;
   await sendEmail({ to, subject, body, unlockLink });
 }
+
+/** Adaptador para AuthService (camada de aplicação). */
+export const authEmailSender: AuthEmailSender = {
+  sendPasswordReset: sendPasswordResetEmail,
+  sendUnlockAccount: sendUnlockAccountEmail,
+};
 
 async function sendEmail({
   to,

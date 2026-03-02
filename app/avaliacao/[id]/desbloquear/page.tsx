@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/app/auth";
-import { getAvaliacaoUseCases } from "@/app/use-cases";
+import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { getUnlockPasswordHash } from "@/src/infrastructure/unlockPassword";
 import { desbloquearMedico } from "../../../actions";
 import { ErrorToast } from "../../../components/ErrorToast";
@@ -20,11 +19,7 @@ export default async function DesbloquearPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc, user, supabaseClient } = await getAuthenticatedUseCases();
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");
@@ -35,8 +30,8 @@ export default async function DesbloquearPage({
 
   const useSupabase = process.env.PERSISTENCE === "supabase";
   let senhaDefinida = true;
-  if (useSupabase && supabase && user) {
-    const stored = await getUnlockPasswordHash(supabase, user.id);
+  if (useSupabase) {
+    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
     senhaDefinida = stored != null;
   }
 

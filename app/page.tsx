@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getSession } from "./auth";
-import { getAvaliacaoUseCases } from "./use-cases";
+import { getAuthenticatedUseCases } from "./use-cases";
 import { iniciarAvaliacao } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -19,11 +18,7 @@ export default async function Home({
 }: {
   searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
 }) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const params = await searchParams;
   const page = parsePageFromQuery(params.page);

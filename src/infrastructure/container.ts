@@ -27,6 +27,10 @@ const useSupabase = process.env.PERSISTENCE === "supabase";
 let consultaRepoFallback: ConsultaRepository | null = null;
 let pacienteRepoFallback: PacienteRepository | null = null;
 
+/**
+ * Isolamento entre usuários: repositórios Supabase recebem userId e filtram por user_id.
+ * O client passado deve ser o mesmo retornado por getSession()/getSessionContext() (service role).
+ */
 function getConsultaRepository(
   supabase?: SupabaseClient<Database>,
   userId?: string
@@ -34,7 +38,7 @@ function getConsultaRepository(
   if (supabase) return new ConsultaRepositorySupabase(supabase, userId);
   if (!consultaRepoFallback) {
     consultaRepoFallback = useSupabase
-      ? new ConsultaRepositorySupabase(getSupabase())
+      ? new ConsultaRepositorySupabase(getSupabase(), undefined)
       : new ConsultaRepositoryJson();
   }
   return consultaRepoFallback;
@@ -47,7 +51,7 @@ function getPacienteRepository(
   if (supabase) return new PacienteRepositorySupabase(supabase, userId);
   if (!pacienteRepoFallback) {
     pacienteRepoFallback = useSupabase
-      ? new PacienteRepositorySupabase(getSupabase())
+      ? new PacienteRepositorySupabase(getSupabase(), undefined)
       : new PacienteRepositoryJson();
   }
   return pacienteRepoFallback;

@@ -7,8 +7,7 @@
  */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { getSession } from "./auth";
-import { getAvaliacaoUseCases } from "./use-cases";
+import { getAuthenticatedUseCases } from "./use-cases";
 import {
   getUnlockPasswordHash,
   setUnlockPassword,
@@ -43,11 +42,7 @@ function isRedirectError(e: unknown): boolean {
 }
 
 export async function iniciarAvaliacao(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc, user } = await getAuthenticatedUseCases();
 
   const nome = (formData.get("nome") as string)?.trim() ?? "";
   const identificador = (formData.get("identificador") as string)?.trim() ?? "";
@@ -58,7 +53,7 @@ export async function iniciarAvaliacao(formData: FormData) {
     const { paciente } = await uc.identificarPaciente({
       nome,
       identificador,
-      userId: process.env.PERSISTENCE === "supabase" ? user?.id : undefined,
+      userId: process.env.PERSISTENCE === "supabase" ? user.id : undefined,
     });
     const consultaId = await uc.iniciarNovaConsulta(paciente.id);
     redirect(pathAvaliacao(consultaId, "clinico"));
@@ -88,11 +83,7 @@ function parsePilaresFromFormData(formData: FormData): PilaresEstruturais {
 }
 
 export async function salvarClinicoForm(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
@@ -110,11 +101,7 @@ export async function salvarClinicoForm(formData: FormData) {
 }
 
 export async function salvarEstruturaForm(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
@@ -133,6 +120,7 @@ export async function salvarEstruturaForm(formData: FormData) {
 
 const MIN_SENHA_DESBLOQUEIO = 4;
 
+/** Desbloqueio da tela de gerar resultado: valida a senha do médico (profiles), não o desbloqueio de conta (auth). */
 export async function desbloquearMedico(formData: FormData) {
   const consultaId = formData.get("consultaId");
   const senha = (formData.get("senha") as string)?.trim() ?? "";
@@ -142,34 +130,31 @@ export async function desbloquearMedico(formData: FormData) {
 
   const useSupabase = process.env.PERSISTENCE === "supabase";
   if (useSupabase) {
-    const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-    if (supabase && user) {
-      const uc = getAvaliacaoUseCases(supabase, user.id);
-      const consulta = await uc.obterConsulta(consultaId);
-      if (!consulta) {
-        redirect("/avaliacao/nova");
-      }
-      if (!consulta.estrutura) {
-        redirect(pathAvaliacao(consultaId, "bloqueado"));
-      }
-      const stored = await getUnlockPasswordHash(supabase, user.id);
-      if (!stored) {
-        const nextUrl = encodeURIComponent(pathAvaliacao(consultaId, "desbloquear"));
-        redirect(`/configuracoes?error=${encodeURIComponent("Defina sua senha de desbloqueio primeiro.")}&next=${nextUrl}`);
-      }
-      if (!verifyUnlockPassword(senha, stored.hash, stored.salt)) {
-        redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
-      }
-      const cookieStore = await cookies();
-      cookieStore.set(COOKIE_MEDICO, consultaId, {
-        path: pathAvaliacao(consultaId),
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 15, // 15 min
-      });
-      redirect(pathAvaliacao(consultaId, "gerar"));
+    const { uc, user, supabaseClient } = await getAuthenticatedUseCases();
+    const consulta = await uc.obterConsulta(consultaId);
+    if (!consulta) {
+      redirect("/avaliacao/nova");
     }
+    if (!consulta.estrutura) {
+      redirect(pathAvaliacao(consultaId, "bloqueado"));
+    }
+    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
+    if (!stored) {
+      const nextUrl = encodeURIComponent(pathAvaliacao(consultaId, "desbloquear"));
+      redirect(`/configuracoes?error=${encodeURIComponent("Defina sua senha de desbloqueio primeiro.")}&next=${nextUrl}`);
+    }
+    if (!verifyUnlockPassword(senha, stored.hash, stored.salt)) {
+      redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
+    }
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_MEDICO, consultaId, {
+      path: pathAvaliacao(consultaId),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 15, // 15 min
+    });
+    redirect(pathAvaliacao(consultaId, "gerar"));
   }
 
   // Fallback: modo JSON ou sem Supabase — senha global
@@ -188,6 +173,7 @@ export async function desbloquearMedico(formData: FormData) {
   redirect(pathAvaliacao(consultaId, "gerar"));
 }
 
+/** Define a senha de desbloqueio do médico (tela gerar resultado), em Configurações. */
 export async function definirSenhaDesbloqueio(formData: FormData) {
   const senha = (formData.get("senha") as string)?.trim() ?? "";
   const confirmacao = (formData.get("confirmacao") as string)?.trim() ?? "";
@@ -204,12 +190,12 @@ export async function definirSenhaDesbloqueio(formData: FormData) {
   if (senha !== confirmacao) {
     redirect("/configuracoes?error=" + encodeURIComponent("As senhas não coincidem."));
   }
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  if (process.env.PERSISTENCE !== "supabase" || !supabase || !user) {
-    redirect("/configuracoes?error=" + encodeURIComponent("Configuração disponível apenas com login."));
+  const { supabaseClient, user } = await getAuthenticatedUseCases();
+  if (process.env.PERSISTENCE !== "supabase") {
+    redirect("/configuracoes?error=" + encodeURIComponent("Configuração disponível apenas com Supabase."));
   }
   try {
-    await setUnlockPassword(supabase, user.id, senha);
+    await setUnlockPassword(supabaseClient, user.id, senha);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "Erro ao salvar senha.";
@@ -222,11 +208,7 @@ export async function definirSenhaDesbloqueio(formData: FormData) {
 }
 
 export async function gerarResultados(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   if (!isConsultaIdValido(consultaId)) {
@@ -253,11 +235,7 @@ export async function gerarResultados(formData: FormData) {
 }
 
 export async function salvarImpressaoEFinalizar(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   const impressaoClinica = (formData.get("impressao_clinica") as string)?.trim() ?? "";
@@ -282,11 +260,7 @@ export async function salvarImpressaoEFinalizar(formData: FormData) {
 }
 
 export async function excluirAvaliacao(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   const patientId = (formData.get("patientId") as string)?.trim() ?? "";
@@ -305,11 +279,7 @@ export async function excluirAvaliacao(formData: FormData) {
 
 /** Legado: impressão clínica passou para a tela de resultado; mantido para compatibilidade. */
 export async function salvarImpressaoForm(formData: FormData) {
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
 
   const consultaId = formData.get("consultaId");
   const impressaoClinica = (formData.get("impressao_clinica") as string)?.trim() ?? "";

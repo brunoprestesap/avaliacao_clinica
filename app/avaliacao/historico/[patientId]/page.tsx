@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/app/auth";
-import { getAvaliacaoUseCases } from "@/app/use-cases";
+import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { excluirAvaliacao } from "@/app/actions";
 import { ArrowLeft, Calendar, FileText, Activity, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -17,11 +16,7 @@ export default async function HistoricoPage({
 }) {
   const { patientId } = await params;
   const { error: errorMessage } = await searchParams;
-  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(
-    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
-    user?.id
-  );
+  const { uc } = await getAuthenticatedUseCases();
   const [paciente, consultas] = await Promise.all([
     uc.obterPaciente(patientId),
     uc.listarHistoricoPaciente(patientId),

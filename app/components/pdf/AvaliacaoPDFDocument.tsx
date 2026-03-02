@@ -19,6 +19,8 @@ import {
   VARIACAO_LABELS,
   NOME_PROGRAMA_AVALIACAO,
   DESCRICAO_FASES_PROGRAMA,
+  SCORE_CLINICO_MAX,
+  PILARES_FULL_MARK,
 } from "@/src/domain/constants";
 import { calcularFase } from "@/src/domain/calculos";
 import { formatarDataExibicao } from "@/lib/formatacao";
@@ -39,9 +41,13 @@ const COLORS = {
   backgroundHeader: "#f8fafc",
   accent: "#2563eb",
   alertBg: "#fef2f2",
+  alertBorder: "#fecaca",
   alertText: "#b91c1c",
   tableHeaderBg: "#f1f5f9",
   tableZebra: "#f9fafb",
+  radarGrid: "#e5e7eb",
+  radarAxis: "#d1d5db",
+  radarFill: "#3b82f6",
 } as const;
 
 const SPACING = {
@@ -51,6 +57,16 @@ const SPACING = {
   lg: 16,
   xl: 24,
 } as const;
+
+const RADAR_CONFIG = {
+  size: 300,
+  r: 72,
+  labelOffset: 24,
+  labelFontSize: 8,
+  gridScales: [0.25, 0.5, 0.75, 1] as const,
+} as const;
+
+type RadarDataItem = { value: number; fullMark: number; subject: string };
 
 const styles = StyleSheet.create({
   page: {
@@ -200,7 +216,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#fecaca",
+    borderColor: COLORS.alertBorder,
   },
   alertText: {
     color: COLORS.alertText,
@@ -241,8 +257,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   radarSvg: {
-    width: 300,
-    height: 300,
+    width: RADAR_CONFIG.size,
+    height: RADAR_CONFIG.size,
   },
 });
 
@@ -255,27 +271,33 @@ function formatRadarValue(value: number | string): string {
   return typeof value === "number" ? value.toFixed(2) : String(value);
 }
 
-/** Tamanho total do canvas SVG (com margem para legendas). */
-const RADAR_SIZE = 300;
-const RADAR_CX = RADAR_SIZE / 2;
-const RADAR_CY = RADAR_SIZE / 2;
-/** Raio do gráfico (deixa margem para as legendas fora do círculo). */
-const RADAR_R = 72;
-const RADAR_LABEL_OFFSET = 24;
-const RADAR_LABEL_FONT_SIZE = 8;
+/** Formata delta para exibição (ex: "+2" ou "-1.50"). */
+function formatDelta(value: number, decimals = 0): string {
+  const prefix = value > 0 ? "+" : "";
+  const str = decimals ? value.toFixed(decimals) : String(value);
+  return prefix + str;
+}
+
+/** Ângulo em graus do eixo i (0 no topo, sentido horário). */
+function getAxisAngleDeg(i: number, n: number): number {
+  return -90 + i * (360 / n);
+}
+
+function degToRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
 
 /** Gera os pontos do polígono do radar (eixo no topo, sentido horário). */
-function radarPolygonPoints(
-  data: { value: number; fullMark: number }[]
-): string {
+function radarPolygonPoints(data: RadarDataItem[]): string {
   const n = data.length;
   if (n === 0) return "";
+  const cx = RADAR_CONFIG.size / 2;
+  const cy = RADAR_CONFIG.size / 2;
   const points = data.map((item, i) => {
-    const angleDeg = -90 + i * (360 / n);
-    const angleRad = (angleDeg * Math.PI) / 180;
-    const r = ((item.value ?? 0) / (item.fullMark || 4)) * RADAR_R;
-    const x = RADAR_CX + r * Math.cos(angleRad);
-    const y = RADAR_CY + r * Math.sin(angleRad);
+    const angleRad = degToRad(getAxisAngleDeg(i, n));
+    const r = ((item.value ?? 0) / (item.fullMark || 4)) * RADAR_CONFIG.r;
+    const x = cx + r * Math.cos(angleRad);
+    const y = cy + r * Math.sin(angleRad);
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
   return points.join(" ");
@@ -288,79 +310,73 @@ function RadarChartPDF({
 }) {
   const points = radarPolygonPoints(radar_combinado);
   const n = radar_combinado.length;
-  const axisAngles = Array.from({ length: n }, (_, i) =>
-    -90 + i * (360 / n)
-  );
+  const cx = RADAR_CONFIG.size / 2;
+  const cy = RADAR_CONFIG.size / 2;
+  const { r, labelOffset, labelFontSize } = RADAR_CONFIG;
 
   return (
     <View style={styles.radarWrapper}>
       <View style={styles.radarContainer}>
-      <Svg viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`} style={styles.radarSvg}>
-        <G>
-          {/* Grid: círculos concêntricos */}
-          {[0.25, 0.5, 0.75, 1].map((scale) => (
-            <Circle
-              key={scale}
-              cx={RADAR_CX}
-              cy={RADAR_CY}
-              r={RADAR_R * scale}
-              stroke="#e5e7eb"
-              strokeWidth={0.5}
-              fill="none"
-            />
-          ))}
-          {/* Eixos: linhas do centro até a borda */}
-          {axisAngles.map((angleDeg, i) => {
-            const angleRad = (angleDeg * Math.PI) / 180;
-            const x2 = RADAR_CX + RADAR_R * Math.cos(angleRad);
-            const y2 = RADAR_CY + RADAR_R * Math.sin(angleRad);
-            return (
-              <Line
-                key={i}
-                x1={RADAR_CX}
-                y1={RADAR_CY}
-                x2={x2}
-                y2={y2}
-                stroke="#d1d5db"
+        <Svg
+          viewBox={`0 0 ${RADAR_CONFIG.size} ${RADAR_CONFIG.size}`}
+          style={styles.radarSvg}
+        >
+          <G>
+            {RADAR_CONFIG.gridScales.map((scale) => (
+              <Circle
+                key={scale}
+                cx={cx}
+                cy={cy}
+                r={r * scale}
+                stroke={COLORS.radarGrid}
                 strokeWidth={0.5}
+                fill="none"
               />
-            );
-          })}
-          {/* Polígono dos valores (preenchido) */}
-          {points ? (
-            <Polygon
-              points={points}
-              fill="#3b82f6"
-              fillOpacity={0.25}
-              stroke="#3b82f6"
-              strokeWidth={1}
-            />
-          ) : null}
-          {/* Legendas: nome de cada eixo na borda */}
-          {radar_combinado.map((item, i) => {
-            const angleDeg = -90 + i * (360 / n);
-            const angleRad = (angleDeg * Math.PI) / 180;
-            const labelR = RADAR_R + RADAR_LABEL_OFFSET;
-            const x = RADAR_CX + labelR * Math.cos(angleRad);
-            const y = RADAR_CY + labelR * Math.sin(angleRad);
-            return (
-              <Text
-                key={item.subject}
-                x={x}
-                y={y}
-                style={{
-                  fontSize: RADAR_LABEL_FONT_SIZE,
-                  fill: COLORS.text,
-                  textAnchor: "middle",
-                  fontFamily: "Helvetica",
-                }}
-              >
-                {item.subject}
-              </Text>
-            );
-          })}
-        </G>
-      </Svg>
+            ))}
+            {Array.from({ length: n }, (_, i) => {
+              const angleRad = degToRad(getAxisAngleDeg(i, n));
+              return (
+                <Line
+                  key={i}
+                  x1={cx}
+                  y1={cy}
+                  x2={cx + r * Math.cos(angleRad)}
+                  y2={cy + r * Math.sin(angleRad)}
+                  stroke={COLORS.radarAxis}
+                  strokeWidth={0.5}
+                />
+              );
+            })}
+            {points ? (
+              <Polygon
+                points={points}
+                fill={COLORS.radarFill}
+                fillOpacity={0.25}
+                stroke={COLORS.radarFill}
+                strokeWidth={1}
+              />
+            ) : null}
+            {radar_combinado.map((item, i) => {
+              const angleRad = degToRad(getAxisAngleDeg(i, n));
+              const labelR = r + labelOffset;
+              return (
+                <Text
+                  key={item.subject}
+                  x={cx + labelR * Math.cos(angleRad)}
+                  y={cy + labelR * Math.sin(angleRad)}
+                  style={{
+                    fontSize: labelFontSize,
+                    fill: COLORS.text,
+                    textAnchor: "middle",
+                    fontFamily: "Helvetica",
+                  }}
+                >
+                  {item.subject}
+                </Text>
+              );
+            })}
+          </G>
+        </Svg>
       </View>
     </View>
   );
@@ -376,24 +392,22 @@ function ComparacaoSection({ comp }: { comp: ComparacaoResultado }) {
         <Text style={styles.label}>Clínico</Text>
         <Text style={styles.value}>
           {VARIACAO_LABELS[comp.variacao_clinica]} (
-          {comp.delta_clinico > 0 ? "+" : ""}
-          {comp.delta_clinico})
+          {formatDelta(comp.delta_clinico)})
         </Text>
       </View>
       <View style={styles.row}>
         <Text style={styles.label}>Estrutura</Text>
         <Text style={styles.value}>
           {VARIACAO_LABELS[comp.variacao_estrutura]} (
-          {comp.delta_estrutura > 0 ? "+" : ""}
-          {comp.delta_estrutura.toFixed(2)})
+          {formatDelta(comp.delta_estrutura, 2)})
         </Text>
       </View>
       {comp.pilar_maior_melhora && (
         <View style={styles.row}>
           <Text style={styles.label}>Maior melhora</Text>
           <Text style={styles.value}>
-            {comp.pilar_maior_melhora.label} (+
-            {comp.pilar_maior_melhora.delta})
+            {comp.pilar_maior_melhora.label} (
+            {formatDelta(comp.pilar_maior_melhora.delta)})
           </Text>
         </View>
       )}
@@ -401,8 +415,7 @@ function ComparacaoSection({ comp }: { comp: ComparacaoResultado }) {
         <View style={styles.row}>
           <Text style={styles.label}>Maior piora</Text>
           <Text style={styles.value}>
-            {comp.pilar_maior_piora.label} (
-            {comp.pilar_maior_piora.delta})
+            {comp.pilar_maior_piora.label} ({formatDelta(comp.pilar_maior_piora.delta)})
           </Text>
         </View>
       )}
@@ -420,6 +433,37 @@ function RadarSection({
       <Text style={styles.sectionTitle}>Estrutura dos 9 pilares (radar)</Text>
       <RadarChartPDF radar_combinado={radar_combinado} />
     </>
+  );
+}
+
+function getTableRowStyle(
+  index: number
+): typeof styles.tableRow | (typeof styles.tableRow | typeof styles.tableRowZebra)[] {
+  return index % 2 === 1
+    ? [styles.tableRow, styles.tableRowZebra]
+    : styles.tableRow;
+}
+
+function TabelaPilaresPDF({
+  radar_combinado,
+}: {
+  radar_combinado: ResultadoCompletoDTO["radar_combinado"];
+}) {
+  return (
+    <View style={styles.table}>
+      <View style={styles.tableHeaderRow}>
+        <Text style={styles.tableHeaderCell}>Dimensão</Text>
+        <Text style={styles.tableHeaderCell}>Valor</Text>
+      </View>
+      {radar_combinado.map((item, index) => (
+        <View key={item.subject} style={getTableRowStyle(index)}>
+          <Text style={styles.tableCell}>{item.subject}</Text>
+          <Text style={styles.tableCell}>
+            {formatRadarValue(item.value)}
+          </Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -484,7 +528,7 @@ export function AvaliacaoPDFDocument({
         <View style={styles.cardRow}>
           <View style={[styles.cardItem, styles.cardItemFirst]}>
             <Text style={styles.cardItemLabel}>Score clínico</Text>
-            <Text style={styles.cardItemValue}>{clinico.score_total}</Text>
+            <Text style={styles.cardItemValue}>{clinico.score_total} de {SCORE_CLINICO_MAX}</Text>
             <Text style={[styles.label, { marginTop: 4 }]}>
               {CLASSIFICACAO_CLINICA_LABELS[clinico.classificacao]}
             </Text>
@@ -492,7 +536,7 @@ export function AvaliacaoPDFDocument({
           <View style={styles.cardItem}>
             <Text style={styles.cardItemLabel}>Média estrutural</Text>
             <Text style={styles.cardItemValue}>
-              {estrutura.media.toFixed(2)}
+              {estrutura.media.toFixed(2)} de {PILARES_FULL_MARK}
             </Text>
             <Text style={[styles.label, { marginTop: 4 }]}>
               {CLASSIFICACAO_ESTRUTURA_LABELS[estrutura.classificacao]}
@@ -518,27 +562,7 @@ export function AvaliacaoPDFDocument({
           <Text style={[styles.sectionTitle, styles.sectionTitleFirst]}>
             Tabela – Estrutura dos 9 pilares (radar)
           </Text>
-          <View style={styles.table}>
-            <View style={styles.tableHeaderRow}>
-              <Text style={styles.tableHeaderCell}>Dimensão</Text>
-              <Text style={styles.tableHeaderCell}>Valor</Text>
-            </View>
-            {radar_combinado.map((item, index) => (
-              <View
-                key={item.subject}
-                style={
-                  index % 2 === 1
-                    ? [styles.tableRow, styles.tableRowZebra]
-                    : styles.tableRow
-                }
-              >
-                <Text style={styles.tableCell}>{item.subject}</Text>
-                <Text style={styles.tableCell}>
-                  {formatRadarValue(item.value)}
-                </Text>
-              </View>
-            ))}
-          </View>
+          <TabelaPilaresPDF radar_combinado={radar_combinado} />
         </View>
 
         <Text style={styles.sectionTitle}>Impressão clínica</Text>

@@ -6,6 +6,10 @@ import {
   CLASSIFICACAO_ESTRUTURA_LABELS,
   VARIACAO_LABELS,
 } from "@/src/application";
+import {
+  SCORE_CLINICO_MAX,
+  PILARES_FULL_MARK,
+} from "@/src/domain/constants";
 import { ResultadoRadares } from "../../../components/ResultadoRadares";
 import { salvarImpressaoEFinalizar } from "../../../actions";
 import { Stepper } from "../../../components/Stepper";
@@ -14,6 +18,16 @@ import { ErrorToast } from "../../../components/ErrorToast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+/** Nome do programa/fase para exibição (e fallback para valores legados numéricos). */
+const FASE_INDICADA_DISPLAY: Record<string, string> = {
+  Integral: "Integral",
+  Núcleo: "Núcleo",
+  Essência: "Essência",
+  "1": "Essência",
+  "2": "Núcleo",
+  "4": "Integral",
+};
 
 export default async function ResultadoPage({
   params,
@@ -81,7 +95,7 @@ export default async function ResultadoPage({
                 <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Score clínico</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold sm:text-4xl text-foreground">{c.score_total}</div>
+                <div className="text-3xl font-bold sm:text-4xl text-foreground">{c.score_total} de {SCORE_CLINICO_MAX}</div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {CLASSIFICACAO_CLINICA_LABELS[c.classificacao]}
                 </p>
@@ -92,7 +106,7 @@ export default async function ResultadoPage({
                 <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Média estrutural</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold sm:text-4xl text-foreground">{e.media.toFixed(2)}</div>
+                <div className="text-3xl font-bold sm:text-4xl text-foreground">{e.media.toFixed(2)} de {PILARES_FULL_MARK}</div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {CLASSIFICACAO_ESTRUTURA_LABELS[e.classificacao]}
                 </p>
@@ -105,7 +119,7 @@ export default async function ResultadoPage({
               <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">FASE indicada</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold sm:text-3xl text-primary">{consulta.fase_indicada}</div>
+              <div className="text-2xl font-bold sm:text-3xl text-primary">{consulta.fase_indicada ? FASE_INDICADA_DISPLAY[consulta.fase_indicada] ?? consulta.fase_indicada : ""}</div>
             </CardContent>
           </Card>
 

@@ -20,8 +20,12 @@ const NUMBER_TO_FASE: Record<number, FaseIndicadaLabel> = {
 
 function normalizeFaseFromRow(value: unknown): Consulta["fase_indicada"] {
   if (value == null) return undefined;
-  if (typeof value === "string") return value as FaseIndicadaLabel;
   if (typeof value === "number" && NUMBER_TO_FASE[value]) return NUMBER_TO_FASE[value];
+  if (typeof value === "string") {
+    const num = Number(value);
+    if (NUMBER_TO_FASE[num]) return NUMBER_TO_FASE[num];
+    if (value === "Integral" || value === "Núcleo" || value === "Essência") return value as FaseIndicadaLabel;
+  }
   return undefined;
 }
 

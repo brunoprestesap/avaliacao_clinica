@@ -49,9 +49,16 @@ const tooltipStyle = {
 const temComparacao = (pilares: { value_anterior?: number }[]) =>
   pilares.some((p) => p.value_anterior != null);
 
-function TooltipRadar({ active, payload }: { active?: boolean; payload?: { name: string; value: number; dataKey: string }[] }) {
+type TooltipPayloadItem = {
+  name: string;
+  value: number;
+  dataKey: string;
+  payload?: { subject: string; value: number; value_anterior?: number };
+};
+
+function TooltipRadar({ active, payload }: { active?: boolean; payload?: TooltipPayloadItem[] }) {
   if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload as { subject: string; value: number; value_anterior?: number };
+  const row = payload[0]?.payload ?? { subject: "", value: 0 };
   return (
     <div style={tooltipStyle} className="rounded-lg border p-3 shadow-md">
       <p className="font-medium text-foreground">{row.subject}</p>
@@ -63,9 +70,9 @@ function TooltipRadar({ active, payload }: { active?: boolean; payload?: { name:
   );
 }
 
-function TooltipBarras({ active, payload }: { active?: boolean; payload?: { name: string; value: number; dataKey: string }[] }) {
+function TooltipBarras({ active, payload }: { active?: boolean; payload?: TooltipPayloadItem[] }) {
   if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload as { subject: string; value: number; value_anterior?: number };
+  const row = payload[0]?.payload ?? { subject: "", value: 0 };
   return (
     <div style={tooltipStyle} className="rounded-lg border p-3 shadow-md">
       <p className="font-medium text-foreground">{row.subject}</p>

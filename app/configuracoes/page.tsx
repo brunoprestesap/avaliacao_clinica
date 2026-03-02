@@ -50,8 +50,7 @@ export default async function ConfiguracoesPage({
               Senha de desbloqueio
             </CardTitle>
             <CardDescription className="text-base text-muted-foreground mt-1">
-              Usada na tela &quot;Sou o médico&quot; após o paciente finalizar o preenchimento. Só você pode
-              desbloquear para gerar o resultado.
+              Usada na tela &quot;Equipe de Saúde&quot; após o paciente finalizar o preenchimento. Só você pode desbloquear para gerar o resultado.
             </CardDescription>
             {process.env.PERSISTENCE === "supabase" && (
               <p className="text-sm text-muted-foreground mt-2">

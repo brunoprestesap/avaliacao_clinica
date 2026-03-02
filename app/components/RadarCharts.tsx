@@ -9,6 +9,7 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Tooltip,
+  Legend,
   BarChart,
   Bar,
   XAxis,
@@ -35,6 +36,7 @@ interface RadarChartsProps {
 }
 
 const CHART_COLOR_PRIMARY = "var(--primary)";
+const CHART_COLOR_ANTERIOR = "var(--muted-foreground)";
 
 const tooltipStyle = {
   backgroundColor: "var(--card)",
@@ -44,7 +46,39 @@ const tooltipStyle = {
   boxShadow: "var(--shadow-md)"
 };
 
+const temComparacao = (pilares: { value_anterior?: number }[]) =>
+  pilares.some((p) => p.value_anterior != null);
+
+function TooltipRadar({ active, payload }: { active?: boolean; payload?: { name: string; value: number; dataKey: string }[] }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload as { subject: string; value: number; value_anterior?: number };
+  return (
+    <div style={tooltipStyle} className="rounded-lg border p-3 shadow-md">
+      <p className="font-medium text-foreground">{row.subject}</p>
+      <p style={{ color: "var(--primary)" }}>Esta avaliação: {row.value}</p>
+      {row.value_anterior != null && (
+        <p style={{ color: "var(--muted-foreground)" }}>Última avaliação: {row.value_anterior}</p>
+      )}
+    </div>
+  );
+}
+
+function TooltipBarras({ active, payload }: { active?: boolean; payload?: { name: string; value: number; dataKey: string }[] }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload as { subject: string; value: number; value_anterior?: number };
+  return (
+    <div style={tooltipStyle} className="rounded-lg border p-3 shadow-md">
+      <p className="font-medium text-foreground">{row.subject}</p>
+      <p style={{ color: "var(--primary)" }}>Esta avaliação: {row.value}</p>
+      {row.value_anterior != null && (
+        <p style={{ color: "var(--muted-foreground)" }}>Última avaliação: {row.value_anterior}</p>
+      )}
+    </div>
+  );
+}
+
 export function RadarEstrutural({ data }: RadarChartsProps) {
+  const comparacao = temComparacao(data.radar_pilares);
   return (
     <div className="h-[280px] w-full sm:h-[320px] md:h-[380px] lg:h-[420px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -53,13 +87,24 @@ export function RadarEstrutural({ data }: RadarChartsProps) {
           <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: "var(--foreground)" }} />
           <PolarRadiusAxis angle={30} domain={[0, PILARES_FULL_MARK]} tick={{ fill: "var(--muted-foreground)" }} />
           <Radar
-            name="Pilares"
+            name="Esta avaliação"
             dataKey="value"
             stroke={CHART_COLOR_PRIMARY}
             fill={CHART_COLOR_PRIMARY}
             fillOpacity={0.25}
           />
-          <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--foreground)" }} />
+          {comparacao && (
+            <Radar
+              name="Última avaliação"
+              dataKey="value_anterior"
+              stroke={CHART_COLOR_ANTERIOR}
+              fill={CHART_COLOR_ANTERIOR}
+              fillOpacity={0.15}
+              strokeDasharray="4 4"
+            />
+          )}
+          <Tooltip content={<TooltipRadar />} contentStyle={tooltipStyle} />
+          {comparacao && <Legend wrapperStyle={{ fontSize: 12 }} />}
         </RadarChart>
       </ResponsiveContainer>
     </div>
@@ -70,6 +115,7 @@ export function BarrasPilares({ data }: RadarChartsProps) {
   const isNarrow = useNarrowViewport(480);
   const tickFontSize = isNarrow ? 9 : 11;
   const marginBottom = isNarrow ? 110 : 100;
+  const comparacao = temComparacao(data.radar_pilares);
   return (
     <div className="h-[350px] w-full sm:h-[400px] md:h-[450px] lg:h-[480px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -85,8 +131,22 @@ export function BarrasPilares({ data }: RadarChartsProps) {
             tickMargin={15}
           />
           <YAxis domain={[0, PILARES_FULL_MARK]} tick={{ fontSize: tickFontSize, fill: "var(--muted-foreground)" }} />
-          <Bar dataKey="value" name="Nota" fill={CHART_COLOR_PRIMARY} radius={[4, 4, 0, 0]} />
-          <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--foreground)" }} cursor={{ fill: "var(--muted)" }} />
+          <Tooltip content={<TooltipBarras />} contentStyle={tooltipStyle} cursor={{ fill: "var(--muted)" }} />
+          {comparacao && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          <Bar
+            dataKey="value"
+            name="Esta avaliação"
+            fill={CHART_COLOR_PRIMARY}
+            radius={[4, 4, 0, 0]}
+          />
+          {comparacao && (
+            <Bar
+              dataKey="value_anterior"
+              name="Última avaliação"
+              fill={CHART_COLOR_ANTERIOR}
+              radius={[4, 4, 0, 0]}
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

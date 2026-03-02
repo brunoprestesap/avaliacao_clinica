@@ -1,4 +1,4 @@
--- Perfil do médico: senha de desbloqueio (hash + salt) para a tela "Sou o médico"
+-- Perfil da equipe de saúde: senha de desbloqueio (hash + salt) para a tela "Equipe de Saúde"
 CREATE TABLE IF NOT EXISTS profiles (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   unlock_password_hash text NOT NULL,

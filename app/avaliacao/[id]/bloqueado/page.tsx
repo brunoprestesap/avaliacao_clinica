@@ -4,6 +4,13 @@ import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 
+const COPY = {
+  title: "Entregue o tablet à equipe de saúde",
+  description:
+    "O preenchimento pelo paciente foi concluído. A equipe de saúde deve desbloquear a tela para continuar a avaliação.",
+  buttonLabel: "Equipe de Saúde",
+} as const;
+
 export default async function BloqueadoPage({
   params,
 }: {
@@ -28,14 +35,14 @@ export default async function BloqueadoPage({
           <ShieldAlert className="h-12 w-12" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Entregue o tablet ao médico
+          {COPY.title}
         </h1>
         <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-          O preenchimento pelo paciente foi concluído. O médico deve desbloquear a tela para continuar a avaliação.
+          {COPY.description}
         </p>
         <Button asChild variant="outline" className="mt-10 h-12 w-full rounded-xl text-base font-medium max-w-[24rem]">
           <Link href={`/avaliacao/${consultaId}/desbloquear`}>
-            Sou o médico
+            {COPY.buttonLabel}
           </Link>
         </Button>
       </div>

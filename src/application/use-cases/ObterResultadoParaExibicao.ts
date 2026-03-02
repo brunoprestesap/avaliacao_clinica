@@ -17,9 +17,10 @@ export function createObterResultadoParaExibicao(repo: ConsultaRepository) {
       return null;
     }
     let consultaParaExibir: Consulta = consulta;
-    if (!consulta.comparacao && consulta.patient_id) {
-      const anterior = await repo.getUltimaConsultaAntesDe(consulta.patient_id, consulta.id);
-      if (anterior) {
+    let anterior: Consulta | null = null;
+    if (consulta.patient_id) {
+      anterior = await repo.getUltimaConsultaAntesDe(consulta.patient_id, consulta.id);
+      if (anterior && !consulta.comparacao) {
         const comparacao = compararComUltima(consulta, anterior);
         if (comparacao) {
           consultaParaExibir = { ...consulta, comparacao };
@@ -27,7 +28,14 @@ export function createObterResultadoParaExibicao(repo: ConsultaRepository) {
       }
     }
     const clinico_normalizado_radar = clinicoNormalizadoParaRadar(consulta.clinico.score_total);
-    const radar_pilares = buildRadarPilares(consulta.estrutura.pilares);
+    const pilaresAtual = buildRadarPilares(consulta.estrutura.pilares);
+    const radar_pilares =
+      anterior?.estrutura?.pilares
+        ? pilaresAtual.map((p, i) => {
+            const pilaresAnterior = buildRadarPilares(anterior!.estrutura!.pilares);
+            return { ...p, value_anterior: pilaresAnterior[i]?.value };
+          })
+        : pilaresAtual;
     const radar_combinado = [
       { subject: "Clínico", value: clinico_normalizado_radar, fullMark: PILARES_FULL_MARK },
       ...radar_pilares,

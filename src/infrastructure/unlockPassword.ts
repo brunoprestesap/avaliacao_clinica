@@ -1,6 +1,6 @@
 /**
- * Senha de desbloqueio da avaliação (médico).
- * Usada na tela "desbloquear" para permitir ao médico gerar o resultado após o paciente preencher.
+ * Senha de desbloqueio da avaliação (equipe de saúde).
+ * Usada na tela "desbloquear" para permitir à equipe de saúde gerar o resultado após o paciente preencher.
  * Não confundir com desbloqueio de conta (auth), que usa account_unlock_tokens e auth-actions.
  */
 import { scryptSync, randomBytes } from "node:crypto";
@@ -12,7 +12,7 @@ const SCRYPT_KEYLEN = 64;
 const SCRYPT_N = 16384;
 const SALT_BYTES = 16;
 
-/** Hash e salt da senha de desbloqueio do médico (tela de gerar resultado). */
+/** Hash e salt da senha de desbloqueio da equipe de saúde (tela de gerar resultado). */
 export interface UnlockPasswordStored {
   hash: string;
   salt: string;
@@ -27,7 +27,7 @@ function isTableNotFoundError(message: string): boolean {
   );
 }
 
-/** Obtém hash/salt da senha de desbloqueio do médico (profiles) para o usuário. */
+/** Obtém hash/salt da senha de desbloqueio da equipe de saúde (profiles) para o usuário. */
 export async function getUnlockPasswordHash(
   supabase: SupabaseClient<Database>,
   userId: string
@@ -46,7 +46,7 @@ export async function getUnlockPasswordHash(
   return { hash: row.unlock_password_hash, salt: row.unlock_password_salt };
 }
 
-/** Define a senha de desbloqueio do médico (Configurações). */
+/** Define a senha de desbloqueio da equipe de saúde (Configurações). */
 export async function setUnlockPassword(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -75,7 +75,7 @@ export function hashPassword(senhaPlain: string, saltHex: string): string {
   return scryptSync(senhaPlain, salt, SCRYPT_KEYLEN, { N: SCRYPT_N }).toString("hex");
 }
 
-/** Verifica a senha de desbloqueio do médico (tela desbloquear → gerar). */
+/** Verifica a senha de desbloqueio da equipe de saúde (tela desbloquear → gerar). */
 export function verifyUnlockPassword(
   senhaPlain: string,
   storedHash: string,

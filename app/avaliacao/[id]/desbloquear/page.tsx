@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { getUnlockPasswordHash } from "@/src/infrastructure/unlockPassword";
-import { desbloquearMedico } from "../../../actions";
-import { ErrorToast } from "../../../components/ErrorToast";
-import { SubmitButton } from "../../../components/SubmitButton";
+import { desbloquearEquipeSaude } from "@/app/actions";
+import { ErrorToast } from "@/app/components/ErrorToast";
+import { SubmitButton } from "@/app/components/SubmitButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,14 +71,14 @@ export default async function DesbloquearPage({
           <Card className="border-border/80 shadow-[var(--shadow-card)]">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
-                Desbloqueio médico
+                Desbloqueio da equipe de saúde
               </CardTitle>
               <CardDescription className="text-base text-muted-foreground">
                 Digite a senha para acessar a geração de resultados.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={desbloquearMedico} className="space-y-6">
+              <form action={desbloquearEquipeSaude} className="space-y-6">
                 <input type="hidden" name="consultaId" value={consultaId} />
                 <div className="space-y-2">
                   <Label htmlFor="senha" className="text-foreground">Senha</Label>

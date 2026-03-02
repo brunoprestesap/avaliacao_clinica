@@ -120,8 +120,8 @@ export async function salvarEstruturaForm(formData: FormData) {
 
 const MIN_SENHA_DESBLOQUEIO = 4;
 
-/** Desbloqueio da tela de gerar resultado: valida a senha do médico (profiles), não o desbloqueio de conta (auth). */
-export async function desbloquearMedico(formData: FormData) {
+/** Desbloqueio da tela de gerar resultado: valida a senha da equipe de saúde (profiles), não o desbloqueio de conta (auth). */
+export async function desbloquearEquipeSaude(formData: FormData) {
   const consultaId = formData.get("consultaId");
   const senha = (formData.get("senha") as string)?.trim() ?? "";
   if (!isConsultaIdValido(consultaId)) {
@@ -173,7 +173,7 @@ export async function desbloquearMedico(formData: FormData) {
   redirect(pathAvaliacao(consultaId, "gerar"));
 }
 
-/** Define a senha de desbloqueio do médico (tela gerar resultado), em Configurações. */
+/** Define a senha de desbloqueio da equipe de saúde (tela gerar resultado), em Configurações. */
 export async function definirSenhaDesbloqueio(formData: FormData) {
   const senha = (formData.get("senha") as string)?.trim() ?? "";
   const confirmacao = (formData.get("confirmacao") as string)?.trim() ?? "";

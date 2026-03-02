@@ -11,7 +11,7 @@ import { PILARES_FULL_MARK } from "@/src/domain/constants";
 export interface ResultadoCompletoDTO {
   consulta: Consulta;
   clinico_normalizado_radar: number;
-  radar_pilares: { subject: string; value: number; fullMark: number }[];
+  radar_pilares: { subject: string; value: number; fullMark: number; value_anterior?: number }[];
   radar_combinado: { subject: string; value: number; fullMark: number }[];
 }
 

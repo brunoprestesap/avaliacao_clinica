@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "@/src/infrastructure/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/auth-options";
+import { getSupabase } from "@/src/infrastructure/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/src/infrastructure/supabase/database.types";
 
@@ -14,19 +16,11 @@ export async function getSession(options?: {
   supabase: SupabaseClient<Database> | null;
   user: AuthUser | null;
 }> {
-  let supabase: SupabaseClient<Database> | null = null;
-  try {
-    supabase = await createServerSupabaseClient();
-  } catch {
-    if (options?.redirectIfUnauthenticated) redirect("/login");
-    return { supabase: null, user: null };
-  }
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  const user: AuthUser | null = claims
+  const session = await getServerSession(authOptions);
+  const user: AuthUser | null = session?.user?.id
     ? {
-        id: claims.sub as string,
-        email: (claims.email as string) ?? undefined,
+        id: session.user.id,
+        email: session.user.email ?? undefined,
       }
     : null;
 
@@ -34,5 +28,14 @@ export async function getSession(options?: {
     redirect("/login");
   }
 
+  if (!user) {
+    return { supabase: null, user: null };
+  }
+
+  // Importante: Supabase pode estar configurado com "JWT Signing Keys" (ES256/RS256),
+  // onde a chave privada não é extraível — então não é possível "mintar" JWTs aqui
+  // usando `SUPABASE_JWT_SECRET`. Para manter o app funcional, usamos o client
+  // com service role no server e aplicamos o escopo por `user_id` nos repositórios.
+  const supabase: SupabaseClient<Database> = getSupabase();
   return { supabase, user };
 }

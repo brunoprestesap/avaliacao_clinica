@@ -27,8 +27,11 @@ const useSupabase = process.env.PERSISTENCE === "supabase";
 let consultaRepoFallback: ConsultaRepository | null = null;
 let pacienteRepoFallback: PacienteRepository | null = null;
 
-function getConsultaRepository(supabase?: SupabaseClient<Database>): ConsultaRepository {
-  if (supabase) return new ConsultaRepositorySupabase(supabase);
+function getConsultaRepository(
+  supabase?: SupabaseClient<Database>,
+  userId?: string
+): ConsultaRepository {
+  if (supabase) return new ConsultaRepositorySupabase(supabase, userId);
   if (!consultaRepoFallback) {
     consultaRepoFallback = useSupabase
       ? new ConsultaRepositorySupabase(getSupabase())
@@ -37,8 +40,11 @@ function getConsultaRepository(supabase?: SupabaseClient<Database>): ConsultaRep
   return consultaRepoFallback;
 }
 
-function getPacienteRepository(supabase?: SupabaseClient<Database>): PacienteRepository {
-  if (supabase) return new PacienteRepositorySupabase(supabase);
+function getPacienteRepository(
+  supabase?: SupabaseClient<Database>,
+  userId?: string
+): PacienteRepository {
+  if (supabase) return new PacienteRepositorySupabase(supabase, userId);
   if (!pacienteRepoFallback) {
     pacienteRepoFallback = useSupabase
       ? new PacienteRepositorySupabase(getSupabase())
@@ -47,9 +53,12 @@ function getPacienteRepository(supabase?: SupabaseClient<Database>): PacienteRep
   return pacienteRepoFallback;
 }
 
-export function createAvaliacaoUseCases(supabase?: SupabaseClient<Database>): AvaliacaoUseCases {
-  const consultaRepo = getConsultaRepository(supabase);
-  const pacienteRepo = getPacienteRepository(supabase);
+export function createAvaliacaoUseCases(
+  supabase?: SupabaseClient<Database>,
+  userId?: string
+): AvaliacaoUseCases {
+  const consultaRepo = getConsultaRepository(supabase, userId);
+  const pacienteRepo = getPacienteRepository(supabase, userId);
   return {
     identificarPaciente: createIdentificarPaciente(pacienteRepo),
     iniciarNovaConsulta: createIniciarNovaConsulta(consultaRepo),

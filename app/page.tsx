@@ -19,8 +19,11 @@ export default async function Home({
 }: {
   searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
 }) {
-  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(
+    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
+    user?.id
+  );
 
   const params = await searchParams;
   const page = parsePageFromQuery(params.page);

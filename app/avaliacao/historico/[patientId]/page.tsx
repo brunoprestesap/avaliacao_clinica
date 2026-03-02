@@ -17,8 +17,11 @@ export default async function HistoricoPage({
 }) {
   const { patientId } = await params;
   const { error: errorMessage } = await searchParams;
-  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(
+    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
+    user?.id
+  );
   const [paciente, consultas] = await Promise.all([
     uc.obterPaciente(patientId),
     uc.listarHistoricoPaciente(patientId),

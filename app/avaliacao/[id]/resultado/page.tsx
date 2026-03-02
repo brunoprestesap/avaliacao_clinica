@@ -24,8 +24,11 @@ export default async function ResultadoPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(
+    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
+    user?.id
+  );
   const resultado = await uc.obterResultadoParaExibicao(consultaId);
   if (!resultado) {
     redirect("/avaliacao/nova");

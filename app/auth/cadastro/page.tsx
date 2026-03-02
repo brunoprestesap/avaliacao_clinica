@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorToast } from "../../components/ErrorToast";
+import { safeDecodeError } from "../../lib/safeDecodeError";
 
 export default async function CadastroPage({
   searchParams,
@@ -27,7 +28,7 @@ export default async function CadastroPage({
         <CardContent className="pt-4 pb-8">
           {params.success ? (
             <p className="text-sm text-green-600 dark:text-green-400 mb-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-              {params.success}
+              {safeDecodeError(params.success)}
             </p>
           ) : null}
           <ErrorToast error={params.error} />

@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { resetPasswordAction } from "../../auth-actions";
+import { unlockAccountAction } from "../../auth-actions";
 import { SubmitButton } from "../../components/SubmitButton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorToast } from "../../components/ErrorToast";
 
-export default async function ResetPasswordPage({
+export default async function DesbloquearContaPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; id?: string; token?: string }>;
@@ -21,61 +19,31 @@ export default async function ResetPasswordPage({
         <div className="h-1 w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden />
         <CardHeader className="pb-2 pt-6">
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Nova senha
+            Desbloquear conta
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
             {hasValidLink
-              ? "Defina uma nova senha. Use o link que enviamos ao seu email."
-              : "Link inválido ou expirado. Solicite um novo na tela de recuperação de senha."}
+              ? "Sua conta foi bloqueada após várias tentativas de login. Clique abaixo para desbloquear e voltar a acessar."
+              : "Link inválido ou expirado. Tente fazer login e use o link que enviamos ao seu email."}
           </p>
         </CardHeader>
         <CardContent className="pt-4 pb-8">
           <ErrorToast error={error} />
           {hasValidLink ? (
-            <form action={resetPasswordAction} className="flex flex-col gap-6">
+            <form action={unlockAccountAction} className="flex flex-col gap-6">
               <input type="hidden" name="id" value={id} />
               <input type="hidden" name="token" value={token} />
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-foreground tracking-tight">
-                  Nova senha
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Mínimo 6 caracteres"
-                  className="h-12 rounded-2xl border-2 focus-visible:ring-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground tracking-tight">
-                  Confirmar nova senha
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Repita a senha"
-                  className="h-12 rounded-2xl border-2 focus-visible:ring-2"
-                />
-              </div>
               <SubmitButton
-                label="Alterar senha"
+                label="Desbloquear minha conta"
                 className="h-14 w-full rounded-2xl text-lg font-semibold mt-4 shadow-lg hover:shadow-xl transition-all"
               />
             </form>
           ) : (
             <Link
-              href="/auth/recuperar-senha"
+              href="/login"
               className="inline-flex h-14 items-center justify-center rounded-2xl bg-primary px-6 text-lg font-semibold text-primary-foreground shadow-lg hover:shadow-xl transition-all"
             >
-              Solicitar novo link
+              Ir para o login
             </Link>
           )}
           <p className="text-center text-sm text-muted-foreground mt-6">

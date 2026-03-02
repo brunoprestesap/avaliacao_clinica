@@ -9,8 +9,11 @@ export default async function ImpressaoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: consultaId } = await params;
-  const { supabase } = await getSession({ redirectIfUnauthenticated: true });
-  const uc = getAvaliacaoUseCases(process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined);
+  const { supabase, user } = await getSession({ redirectIfUnauthenticated: true });
+  const uc = getAvaliacaoUseCases(
+    process.env.PERSISTENCE === "supabase" ? supabase ?? undefined : undefined,
+    user?.id
+  );
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

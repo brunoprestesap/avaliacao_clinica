@@ -39,9 +39,27 @@ function rowToConsulta(row: Record<string, unknown>): Consulta {
 }
 
 export class ConsultaRepositorySupabase implements ConsultaRepository {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(
+    private supabase: SupabaseClient<Database>,
+    private userId?: string
+  ) {}
 
   async save(consulta: Consulta): Promise<void> {
+    if (this.userId) {
+      const { data: p, error: pErr } = await this.supabase
+        .from("pacientes")
+        .select("id")
+        .eq("id", consulta.patient_id)
+        .eq("user_id", this.userId)
+        .maybeSingle();
+      if (pErr) {
+        throw new Error(`ConsultaRepositorySupabase.save: ${pErr.message}`);
+      }
+      if (!p) {
+        throw new Error("ConsultaRepositorySupabase.save: Acesso negado ao paciente.");
+      }
+    }
+
     const faseValue =
       consulta.fase_indicada != null ? FASE_TO_NUMBER[consulta.fase_indicada] : null;
     const row = {
@@ -61,19 +79,44 @@ export class ConsultaRepositorySupabase implements ConsultaRepository {
   }
 
   async findById(id: string): Promise<Consulta | null> {
+    if (this.userId) {
+      const { data, error } = await this.supabase
+        .from(TABLE)
+        .select("*, pacientes!inner(user_id)")
+        .eq("id", id)
+        .eq("pacientes.user_id", this.userId)
+        .maybeSingle();
+      if (error) throw new Error(`ConsultaRepositorySupabase.findById: ${error.message}`);
+      if (!data) return null;
+      const { pacientes: _pacientes, ...row } = data as unknown as Record<string, unknown> & {
+        pacientes?: unknown;
+      };
+      return rowToConsulta(row);
+    }
+
     const { data, error } = await this.supabase.from(TABLE).select("*").eq("id", id).maybeSingle();
     if (error) throw new Error(`ConsultaRepositorySupabase.findById: ${error.message}`);
     return data ? rowToConsulta(data) : null;
   }
 
   async findByPatientIdOrderByDate(patientId: string): Promise<Consulta[]> {
-    const { data, error } = await this.supabase
-      .from(TABLE)
-      .select("*")
-      .eq("patient_id", patientId)
-      .order("date", { ascending: true });
+    let q = this.supabase.from(TABLE).select("*").eq("patient_id", patientId);
+    if (this.userId) {
+      q = this.supabase
+        .from(TABLE)
+        .select("*, pacientes!inner(user_id)")
+        .eq("patient_id", patientId)
+        .eq("pacientes.user_id", this.userId);
+    }
+    const { data, error } = await q.order("date", { ascending: true });
     if (error) throw new Error(`ConsultaRepositorySupabase.findByPatientIdOrderByDate: ${error.message}`);
-    return (data ?? []).map(rowToConsulta);
+    return (data ?? []).map((row) => {
+      if (this.userId && row && typeof row === "object" && "pacientes" in row) {
+        const { pacientes: _pacientes, ...rest } = row as Record<string, unknown>;
+        return rowToConsulta(rest);
+      }
+      return rowToConsulta(row as unknown as Record<string, unknown>);
+    });
   }
 
   async getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null> {
@@ -88,6 +131,13 @@ export class ConsultaRepositorySupabase implements ConsultaRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (this.userId) {
+      const existing = await this.findById(id);
+      if (!existing) {
+        // Sem acesso ou inexistente: manter comportamento idempotente.
+        return;
+      }
+    }
     const { error } = await this.supabase.from(TABLE).delete().eq("id", id);
     if (error) throw new Error(`ConsultaRepositorySupabase.delete: ${error.message}`);
   }

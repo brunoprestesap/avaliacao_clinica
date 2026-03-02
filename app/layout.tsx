@@ -3,8 +3,9 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { getSession } from "./auth";
-import { logoutAction } from "./auth-actions";
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "./components/LogoutButton";
+import { Providers } from "./providers";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" className={jakarta.variable}>
       <body className="antialiased font-sans">
+        <Providers>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none"
@@ -48,11 +50,7 @@ export default async function RootLayout({
                 <Button asChild variant="ghost" size="sm" className="min-h-10 text-muted-foreground hover:text-foreground">
                   <a href="/configuracoes">Configurações</a>
                 </Button>
-                <form action={logoutAction}>
-                  <Button type="submit" variant="ghost" size="sm" className="min-h-10 min-w-10 text-muted-foreground hover:text-foreground">
-                    Sair
-                  </Button>
-                </form>
+                <LogoutButton />
               </div>
             </div>
           </header>
@@ -61,6 +59,7 @@ export default async function RootLayout({
           {children}
         </div>
         <Toaster />
+        </Providers>
       </body>
     </html>
   );

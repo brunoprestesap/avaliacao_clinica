@@ -16,7 +16,11 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const ctx = await getSessionContext();
+  // Vercel React Best Practices 1.3: start independent ops early, await late.
+  const sessionPromise = getSessionContext();
+  const paramsPromise = context.params;
+
+  const ctx = await sessionPromise;
   if (!ctx) {
     return NextResponse.json(
       { error: "Não autorizado" },
@@ -24,7 +28,7 @@ export async function GET(
     );
   }
 
-  const { id } = await context.params;
+  const { id } = await paramsPromise;
   if (!id) {
     return NextResponse.json(
       { error: "ID da avaliação não informado" },

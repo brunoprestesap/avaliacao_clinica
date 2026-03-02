@@ -16,8 +16,8 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import type { ResultadoCompletoDTO } from "@/src/application";
-import { PILARES_FULL_MARK } from "@/src/application";
+import type { ResultadoCompletoDTO } from "@/src/application/use-cases/CalcularResultadoCompleto";
+import { PILARES_FULL_MARK } from "@/src/domain/constants";
 
 function useNarrowViewport(maxWidth = 480) {
   const [narrow, setNarrow] = useState(false);
@@ -45,6 +45,14 @@ const tooltipStyle = {
   color: "var(--foreground)",
   boxShadow: "var(--shadow-md)"
 };
+
+const TICK_FOREGROUND = { fontSize: 11, fill: "var(--foreground)" as const };
+const TICK_MUTED = { fill: "var(--muted-foreground)" as const };
+const TICK_NARROW = { fontSize: 9, fill: "var(--foreground)" as const };
+const TICK_MUTED_NARROW = { fontSize: 9, fill: "var(--muted-foreground)" as const };
+const TICK_MUTED_DEFAULT = { fontSize: 11, fill: "var(--muted-foreground)" as const };
+const BAR_CHART_MARGIN = { top: 24, right: 24, left: 0, bottom: 100 };
+const BAR_CHART_MARGIN_NARROW = { top: 24, right: 24, left: 0, bottom: 110 };
 
 const temComparacao = (pilares: { value_anterior?: number }[]) =>
   pilares.some((p) => p.value_anterior != null);
@@ -91,8 +99,8 @@ export function RadarEstrutural({ data }: RadarChartsProps) {
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data.radar_pilares} cx="50%" cy="50%" outerRadius="70%">
           <PolarGrid stroke="var(--border)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: "var(--foreground)" }} />
-          <PolarRadiusAxis angle={30} domain={[0, PILARES_FULL_MARK]} tick={{ fill: "var(--muted-foreground)" }} />
+          <PolarAngleAxis dataKey="subject" tick={TICK_FOREGROUND} />
+          <PolarRadiusAxis angle={30} domain={[0, PILARES_FULL_MARK]} tick={TICK_MUTED} />
           <Radar
             name="Esta avaliação"
             dataKey="value"
@@ -120,24 +128,25 @@ export function RadarEstrutural({ data }: RadarChartsProps) {
 
 export function BarrasPilares({ data }: RadarChartsProps) {
   const isNarrow = useNarrowViewport(480);
-  const tickFontSize = isNarrow ? 9 : 11;
-  const marginBottom = isNarrow ? 110 : 100;
   const comparacao = temComparacao(data.radar_pilares);
   return (
     <div className="h-[350px] w-full sm:h-[400px] md:h-[450px] lg:h-[480px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data.radar_pilares} margin={{ top: 24, right: 24, left: 0, bottom: marginBottom }}>
+        <BarChart
+          data={data.radar_pilares}
+          margin={isNarrow ? BAR_CHART_MARGIN_NARROW : BAR_CHART_MARGIN}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="subject"
-            tick={{ fontSize: tickFontSize, fill: "var(--foreground)" }}
+            tick={isNarrow ? TICK_NARROW : TICK_FOREGROUND}
             angle={-45}
             textAnchor="end"
             height={100}
             interval={0}
             tickMargin={15}
           />
-          <YAxis domain={[0, PILARES_FULL_MARK]} tick={{ fontSize: tickFontSize, fill: "var(--muted-foreground)" }} />
+          <YAxis domain={[0, PILARES_FULL_MARK]} tick={isNarrow ? TICK_MUTED_NARROW : TICK_MUTED_DEFAULT} />
           <Tooltip content={<TooltipBarras />} contentStyle={tooltipStyle} cursor={{ fill: "var(--muted)" }} />
           {comparacao && <Legend wrapperStyle={{ fontSize: 12 }} />}
           <Bar

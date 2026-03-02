@@ -14,8 +14,11 @@ export default async function GerarPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { uc } = await getAuthenticatedUseCases();
+  const [{ id: consultaId }, { error }, { uc }] = await Promise.all([
+    params,
+    searchParams,
+    getAuthenticatedUseCases(),
+  ]);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

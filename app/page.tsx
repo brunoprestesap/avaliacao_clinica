@@ -18,9 +18,10 @@ export default async function Home({
 }: {
   searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
 }) {
-  const { uc } = await getAuthenticatedUseCases();
-
-  const params = await searchParams;
+  const [params, { uc }] = await Promise.all([
+    searchParams,
+    getAuthenticatedUseCases(),
+  ]);
   const page = parsePageFromQuery(params.page);
   const limit = parseLimitFromQuery(params.limit);
   const query = parseSearchFromQuery(params.q);

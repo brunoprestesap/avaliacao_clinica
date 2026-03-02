@@ -18,8 +18,11 @@ export default async function DesbloquearPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { uc, user, supabaseClient } = await getAuthenticatedUseCases();
+  const [{ id: consultaId }, { error }, { uc, user, supabaseClient }] = await Promise.all([
+    params,
+    searchParams,
+    getAuthenticatedUseCases(),
+  ]);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Vercel React Best Practices – bundle: imports de barrel viram imports diretos.
-  // lucide-react já é otimizado por padrão; listar aqui garante comportamento em todas as versões.
+  // lucide-react e radix-ui: evita carregar milhares de re-exports (200–800ms por cold start).
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: ["lucide-react", "radix-ui"],
   },
 };
 

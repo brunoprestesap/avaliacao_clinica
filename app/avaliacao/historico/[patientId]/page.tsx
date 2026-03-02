@@ -13,9 +13,11 @@ export default async function HistoricoPage({
   params: Promise<{ patientId: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { patientId } = await params;
-  const { error: errorMessage } = await searchParams;
-  const { uc } = await getAuthenticatedUseCases();
+  const [{ patientId }, { error: errorMessage }, { uc }] = await Promise.all([
+    params,
+    searchParams,
+    getAuthenticatedUseCases(),
+  ]);
   const [paciente, consultas] = await Promise.all([
     uc.obterPaciente(patientId),
     uc.listarHistoricoPaciente(patientId),

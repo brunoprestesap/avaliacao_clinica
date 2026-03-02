@@ -4,6 +4,7 @@ import type {
   ClassificacaoClinica,
   ClassificacaoEstrutural,
   VariacaoComparacao,
+  FaseIndicadaLabel,
 } from "./types";
 
 /** Instrução do formulário clínico (escala_clinica_1.pdf) */
@@ -99,3 +100,16 @@ export const NOME_PROGRAMA_AVALIACAO = "Matriz FASE";
 
 /** Descrição das fases do programa para exibição (Integral, Núcleo, Essência). */
 export const DESCRICAO_FASES_PROGRAMA = "Integral, Núcleo, Essência";
+
+/**
+ * Nome de exibição da fase indicada (UI e fallback para valores legados numéricos no banco).
+ * Chaves: FaseIndicadaLabel ou "1"|"2"|"4" (valores históricos em texto).
+ */
+export const FASE_INDICADA_NOME_EXIBICAO: Record<string, string> = {
+  Integral: "Integral",
+  Núcleo: "Núcleo",
+  Essência: "Essência",
+  "1": "Essência",
+  "2": "Núcleo",
+  "4": "Integral",
+};

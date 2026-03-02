@@ -7,8 +7,10 @@ export default async function ImpressaoPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id: consultaId } = await params;
-  const { uc } = await getAuthenticatedUseCases();
+  const [{ id: consultaId }, { uc }] = await Promise.all([
+    params,
+    getAuthenticatedUseCases(),
+  ]);
   const consulta = await uc.obterConsulta(consultaId);
   if (!consulta) {
     redirect("/avaliacao/nova");

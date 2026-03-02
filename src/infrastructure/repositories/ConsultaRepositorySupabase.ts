@@ -22,9 +22,10 @@ function normalizeFaseFromRow(value: unknown): Consulta["fase_indicada"] {
   if (value == null) return undefined;
   if (typeof value === "number" && NUMBER_TO_FASE[value]) return NUMBER_TO_FASE[value];
   if (typeof value === "string") {
-    const num = Number(value);
-    if (NUMBER_TO_FASE[num]) return NUMBER_TO_FASE[num];
-    if (value === "Integral" || value === "Núcleo" || value === "Essência") return value as FaseIndicadaLabel;
+    const s = value.trim();
+    const num = Number(s);
+    if (Number.isInteger(num) && NUMBER_TO_FASE[num]) return NUMBER_TO_FASE[num];
+    if (s === "Integral" || s === "Núcleo" || s === "Essência") return s as FaseIndicadaLabel;
   }
   return undefined;
 }

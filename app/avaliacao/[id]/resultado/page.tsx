@@ -10,24 +10,14 @@ import {
   SCORE_CLINICO_MAX,
   PILARES_FULL_MARK,
 } from "@/src/domain/constants";
+import { formatarFaseIndicada } from "@/lib/formatacao";
 import { ResultadoRadares } from "../../../components/ResultadoRadares";
+import { ImpressaoClinicaAccordion } from "../../../components/ImpressaoClinicaAccordion";
 import { salvarImpressaoEFinalizar } from "../../../actions";
 import { Stepper } from "../../../components/Stepper";
-import { SubmitButton } from "../../../components/SubmitButton";
 import { ErrorToast } from "../../../components/ErrorToast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-/** Nome do programa/fase para exibição (e fallback para valores legados numéricos). */
-const FASE_INDICADA_DISPLAY: Record<string, string> = {
-  Integral: "Integral",
-  Núcleo: "Núcleo",
-  Essência: "Essência",
-  "1": "Essência",
-  "2": "Núcleo",
-  "4": "Integral",
-};
 
 export default async function ResultadoPage({
   params,
@@ -36,8 +26,11 @@ export default async function ResultadoPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ id: consultaId }, { error }] = await Promise.all([params, searchParams]);
-  const { uc } = await getAuthenticatedUseCases();
+  const [{ id: consultaId }, { error }, { uc }] = await Promise.all([
+    params,
+    searchParams,
+    getAuthenticatedUseCases(),
+  ]);
   const resultado = await uc.obterResultadoParaExibicao(consultaId);
   if (!resultado) {
     redirect("/avaliacao/nova");
@@ -119,7 +112,7 @@ export default async function ResultadoPage({
               <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">FASE indicada</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold sm:text-3xl text-primary">{consulta.fase_indicada ? FASE_INDICADA_DISPLAY[consulta.fase_indicada] ?? consulta.fase_indicada : ""}</div>
+              <div className="text-2xl font-bold sm:text-3xl text-primary">{formatarFaseIndicada(consulta.fase_indicada)}</div>
             </CardContent>
           </Card>
 
@@ -173,33 +166,12 @@ export default async function ResultadoPage({
 
           <ResultadoRadares resultado={resultado} />
 
-          <Card className="border-border/80 shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle className="text-lg uppercase tracking-wider text-muted-foreground text-sm">
-                Impressão clínica
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {jaSalvou ? (
-                <p className="whitespace-pre-wrap rounded-xl bg-muted/30 p-5 text-foreground leading-relaxed">
-                  {consulta.impressao_clinica}
-                </p>
-              ) : (
-                <form action={salvarImpressaoEFinalizar} className="space-y-4">
-                  <input type="hidden" name="consultaId" value={consultaId} />
-                  <textarea
-                    id="impressao_clinica"
-                    name="impressao_clinica"
-                    required
-                    rows={8}
-                    className="input-textarea"
-                    placeholder="Descreva a impressão clínica (obrigatório)..."
-                  />
-                  <SubmitButton label="Salvar e Finalizar" className="h-14 w-full rounded-xl text-lg font-semibold mt-4 shadow-sm hover:shadow-md transition-shadow" />
-                </form>
-              )}
-            </CardContent>
-          </Card>
+          <ImpressaoClinicaAccordion
+            consultaId={consultaId}
+            jaSalvou={jaSalvou}
+            impressaoClinica={consulta.impressao_clinica}
+            saveAction={salvarImpressaoEFinalizar}
+          />
         </div>
       </div>
     </div>

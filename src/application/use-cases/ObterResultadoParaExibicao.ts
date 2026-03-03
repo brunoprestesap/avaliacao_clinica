@@ -1,5 +1,6 @@
 import type { ConsultaRepository } from "../ports";
 import type { Consulta } from "@/src/domain";
+import { isConsultaFinalizada } from "@/src/domain/types";
 import {
   clinicoNormalizadoParaRadar,
   buildRadarPilares,
@@ -13,7 +14,7 @@ export function createObterResultadoParaExibicao(repo: ConsultaRepository) {
     consultaId: string
   ): Promise<ResultadoCompletoDTO | null> {
     const consulta = await repo.findById(consultaId);
-    if (!consulta?.clinico || !consulta?.estrutura || !consulta?.fase_indicada) {
+    if (!consulta || !isConsultaFinalizada(consulta)) {
       return null;
     }
     let consultaParaExibir: Consulta = consulta;

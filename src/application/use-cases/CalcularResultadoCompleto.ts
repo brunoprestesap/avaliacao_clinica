@@ -1,5 +1,6 @@
 import type { ConsultaRepository } from "../ports";
 import type { Consulta } from "@/src/domain";
+import { isConsultaComResultado } from "@/src/domain/types";
 import {
   calcularFase,
   compararComUltima,
@@ -20,7 +21,7 @@ export function createCalcularResultadoCompleto(repo: ConsultaRepository) {
     consultaId: string
   ): Promise<ResultadoCompletoDTO | null> {
     const consulta = await repo.findById(consultaId);
-    if (!consulta?.clinico || !consulta?.estrutura) {
+    if (!consulta || !isConsultaComResultado(consulta)) {
       return null;
     }
     const ideacao = consulta.clinico.itens.C14;

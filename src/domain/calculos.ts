@@ -9,7 +9,29 @@ import type {
   Consulta,
   ComparacaoResultado,
 } from "./types";
+import { isConsultaComResultado } from "./types";
 import { ITENS_CLINICOS, PILARES, SCORE_CLINICO_MAX, PILARES_FULL_MARK } from "./constants";
+
+// Fronteiras de classificação clínica (score 0–42)
+const CLINICO_BOUNDARIES = {
+  ESTAVEL: 7,
+  LEVE: 17,
+  MODERADO: 28,
+} as const;
+
+// Fronteiras de classificação estrutural (média 0–4)
+const ESTRUTURAL_BOUNDARIES = {
+  COMPROMETIDA: 1.4,
+  INSTAVEL: 2.4,
+  FUNCIONAL: 3.4,
+} as const;
+
+// Thresholds de variação entre consultas
+// ≈12% da escala clínica (5/42) e ≈12.5% da escala estrutural (0.5/4)
+const VARIACAO_THRESHOLDS = {
+  CLINICO: 5,
+  ESTRUTURAL: 0.5,
+} as const;
 
 /** Soma dos itens C1–C14 (0–42) */
 export function calcularScoreClinico(itens: ItensClinicos): number {
@@ -18,9 +40,12 @@ export function calcularScoreClinico(itens: ItensClinicos): number {
 
 /** Classificação clínica por faixas de score */
 export function classificacaoClinica(score: number): ClassificacaoClinica {
-  if (score <= 7) return "CLINICO_ESTAVEL";
-  if (score <= 17) return "CLINICO_LEVE";
-  if (score <= 28) return "CLINICO_MODERADO";
+  if (!Number.isFinite(score) || score < 0 || score > SCORE_CLINICO_MAX) {
+    throw new Error(`Score clínico inválido: ${score}`);
+  }
+  if (score <= CLINICO_BOUNDARIES.ESTAVEL) return "CLINICO_ESTAVEL";
+  if (score <= CLINICO_BOUNDARIES.LEVE) return "CLINICO_LEVE";
+  if (score <= CLINICO_BOUNDARIES.MODERADO) return "CLINICO_MODERADO";
   return "CLINICO_GRAVE";
 }
 
@@ -37,9 +62,14 @@ export function calcularMediaEstrutural(pilares: PilaresEstruturais): number {
 
 /** Classificação estrutural por faixas de média */
 export function classificacaoEstrutural(media: number): ClassificacaoEstrutural {
-  if (media <= 1.4) return "ESTRUTURA_COMPROMETIDA";
-  if (media <= 2.4) return "ESTRUTURA_INSTAVEL";
-  if (media <= 3.4) return "ESTRUTURA_FUNCIONAL";
+  if (!Number.isFinite(media) || media < 0 || media > PILARES_FULL_MARK) {
+    throw new Error(`Média estrutural inválida: ${media}`);
+  }
+  // Normalizar antes de comparar para evitar imprecisão de floating-point
+  const m = Math.round(media * 100) / 100;
+  if (m <= ESTRUTURAL_BOUNDARIES.COMPROMETIDA) return "ESTRUTURA_COMPROMETIDA";
+  if (m <= ESTRUTURAL_BOUNDARIES.INSTAVEL) return "ESTRUTURA_INSTAVEL";
+  if (m <= ESTRUTURAL_BOUNDARIES.FUNCIONAL) return "ESTRUTURA_FUNCIONAL";
   return "ESTRUTURA_BEM_ESTRUTURADA";
 }
 
@@ -72,15 +102,15 @@ export function buildRadarPilares(pilares: PilaresEstruturais): { subject: strin
 
 /** Classificação da variação clínica (quanto menor melhor) */
 export function variacaoClinica(deltaClinico: number): VariacaoComparacao {
-  if (deltaClinico <= -5) return "MELHORA_RELEVANTE";
-  if (deltaClinico >= 5) return "PIORA_RELEVANTE";
+  if (deltaClinico <= -VARIACAO_THRESHOLDS.CLINICO) return "MELHORA_RELEVANTE";
+  if (deltaClinico >= VARIACAO_THRESHOLDS.CLINICO) return "PIORA_RELEVANTE";
   return "ESTAVEL";
 }
 
 /** Classificação da variação estrutural (quanto maior melhor) */
 export function variacaoEstrutura(deltaEstrutura: number): VariacaoComparacao {
-  if (deltaEstrutura >= 0.5) return "MELHORA_RELEVANTE";
-  if (deltaEstrutura <= -0.5) return "PIORA_RELEVANTE";
+  if (deltaEstrutura >= VARIACAO_THRESHOLDS.ESTRUTURAL) return "MELHORA_RELEVANTE";
+  if (deltaEstrutura <= -VARIACAO_THRESHOLDS.ESTRUTURAL) return "PIORA_RELEVANTE";
   return "ESTAVEL";
 }
 
@@ -89,7 +119,7 @@ export function compararComUltima(
   atual: Consulta,
   anterior: Consulta
 ): ComparacaoResultado | null {
-  if (!atual.clinico || !atual.estrutura || !anterior.clinico || !anterior.estrutura) {
+  if (!isConsultaComResultado(atual) || !isConsultaComResultado(anterior)) {
     return null;
   }
   const delta_clinico = atual.clinico.score_total - anterior.clinico.score_total;

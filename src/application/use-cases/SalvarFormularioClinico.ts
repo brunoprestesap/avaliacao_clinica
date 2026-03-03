@@ -5,12 +5,17 @@ import {
   classificacaoClinica,
   alertaIdeacao,
 } from "@/src/domain/calculos";
+import { ITENS_CLINICOS } from "@/src/domain/constants";
 
 export function createSalvarFormularioClinico(repo: ConsultaRepository) {
   return async function salvarFormularioClinico(
     consultaId: string,
     itens: ItensClinicos
   ): Promise<void> {
+    for (const { id } of ITENS_CLINICOS) {
+      const v = itens[id];
+      if (v < 0 || v > 3) throw new Error(`Valor inválido para ${id}: ${v}`);
+    }
     const consulta = await repo.findById(consultaId);
     if (!consulta) throw new Error("Consulta não encontrada.");
     const score_total = calcularScoreClinico(itens);

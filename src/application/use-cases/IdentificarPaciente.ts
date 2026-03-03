@@ -34,13 +34,12 @@ export function createIdentificarPaciente(repo: PacienteRepository) {
     try {
       await repo.save(paciente, input.userId);
       return { paciente, criado: true };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("duplicate key") || msg.includes("unique constraint")) {
-        const existenteApos = await repo.findByIdentificador(identificador);
-        if (existenteApos) return { paciente: existenteApos, criado: false };
-      }
-      throw err;
+    } catch {
+      // Falha ao salvar — pode ser race condition com requisição concorrente.
+      // Tenta buscar o paciente que pode ter sido criado pelo outro request.
+      const existenteApos = await repo.findByIdentificador(identificador);
+      if (existenteApos) return { paciente: existenteApos, criado: false };
+      throw new Error("Erro ao criar paciente. Tente novamente.");
     }
   };
 }

@@ -7,6 +7,7 @@
  */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "crypto";
 import { getAuthenticatedUseCases } from "./use-cases";
 import {
   getUnlockPasswordHash,
@@ -17,7 +18,49 @@ import type { ItensClinicos, PilaresEstruturais } from "@/src/application";
 import type { ValorEscalaClinica, ValorEscalaEstrutural } from "@/src/domain";
 import { ITENS_CLINICOS, PILARES } from "@/src/application";
 
-const COOKIE_MEDICO = "medico_consulta_id";
+const COOKIE_MEDICO = "medico_unlock_token";
+const UNLOCK_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutos
+
+/**
+ * Gera um token HMAC-assinado que prova que o desbloqueio foi feito server-side.
+ * Formato interno: consultaId:timestamp|hmac (base64url-encoded).
+ * O cookie armazena apenas o token opaco — nunca o consultaId diretamente.
+ */
+function criarUnlockToken(consultaId: string): string {
+  const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "";
+  const payload = `${consultaId}:${Date.now()}`;
+  const hmac = createHmac("sha256", secret).update(payload).digest("hex");
+  return Buffer.from(`${payload}|${hmac}`).toString("base64url");
+}
+
+/**
+ * Verifica se o token é válido para o consultaId dado.
+ * Retorna false se assinatura inválida, expirado ou pertencer a outra consulta.
+ */
+function verificarUnlockToken(token: string, consultaId: string): boolean {
+  try {
+    const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "";
+    const decoded = Buffer.from(token, "base64url").toString("utf8");
+    const lastPipe = decoded.lastIndexOf("|");
+    if (lastPipe === -1) return false;
+    const payload = decoded.slice(0, lastPipe);
+    const hmacRecebido = decoded.slice(lastPipe + 1);
+    const hmacEsperado = createHmac("sha256", secret).update(payload).digest("hex");
+    // Comparação em tempo constante para evitar timing attacks
+    if (!timingSafeEqual(Buffer.from(hmacRecebido, "hex"), Buffer.from(hmacEsperado, "hex"))) {
+      return false;
+    }
+    const colonIndex = payload.lastIndexOf(":");
+    if (colonIndex === -1) return false;
+    const tokenConsultaId = payload.slice(0, colonIndex);
+    const timestamp = Number(payload.slice(colonIndex + 1));
+    if (tokenConsultaId !== consultaId) return false;
+    if (Date.now() - timestamp > UNLOCK_TOKEN_MAX_AGE_MS) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function pathAvaliacao(consultaId: string, segment = "") {
   const base = `/avaliacao/${consultaId}`;
@@ -146,8 +189,9 @@ export async function desbloquearEquipeSaude(formData: FormData) {
     if (!verifyUnlockPassword(senha, stored.hash, stored.salt)) {
       redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
     }
+    const token = criarUnlockToken(consultaId);
     const cookieStore = await cookies();
-    cookieStore.set(COOKIE_MEDICO, consultaId, {
+    cookieStore.set(COOKIE_MEDICO, token, {
       path: pathAvaliacao(consultaId),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -162,8 +206,9 @@ export async function desbloquearEquipeSaude(formData: FormData) {
   if (!senhaEsperada || senha !== senhaEsperada) {
     redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
   }
+  const token = criarUnlockToken(consultaId);
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_MEDICO, consultaId, {
+  cookieStore.set(COOKIE_MEDICO, token, {
     path: pathAvaliacao(consultaId),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -215,8 +260,8 @@ export async function gerarResultados(formData: FormData) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
   const cookieStore = await cookies();
-  const valor = cookieStore.get(COOKIE_MEDICO)?.value;
-  if (valor !== consultaId) {
+  const token = cookieStore.get(COOKIE_MEDICO)?.value;
+  if (!token || !verificarUnlockToken(token, consultaId)) {
     redirect(pathAvaliacao(consultaId, "bloqueado"));
   }
   try {

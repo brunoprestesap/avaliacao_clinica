@@ -25,7 +25,9 @@ export default async function HistoricoPage({
   if (!paciente) {
     redirect("/");
   }
-  const consultasRecentesPrimeiro = [...consultas].reverse();
+  const LIMITE_HISTORICO = 50;
+  const consultasRecentesPrimeiro = [...consultas].reverse().slice(0, LIMITE_HISTORICO);
+  const temMais = consultas.length > LIMITE_HISTORICO;
 
   return (
     <div className="page-container">
@@ -57,6 +59,11 @@ export default async function HistoricoPage({
                   {errorMessage}
                 </p>
               ) : null}
+              {temMais && (
+                <p className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  Exibindo as {LIMITE_HISTORICO} consultas mais recentes de {consultas.length} registradas.
+                </p>
+              )}
               {consultasRecentesPrimeiro.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-12 px-4 text-center">
                   <Calendar className="h-8 w-8 text-muted-foreground/50 mb-3" />

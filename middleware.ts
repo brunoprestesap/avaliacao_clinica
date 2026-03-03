@@ -17,11 +17,6 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!token && !isAuthRoute) {
-    // Rota raiz: deixar a página decidir (getSession), evitando loop pós-OAuth
-    // onde o cookie pode ainda não estar disponível no Edge na primeira requisição.
-    if (path === "/") {
-      return NextResponse.next();
-    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -125,14 +125,39 @@ export class ConsultaRepositorySupabase implements ConsultaRepository {
   }
 
   async getUltimaConsultaAntesDe(patientId: string, currentConsultaId: string): Promise<Consulta | null> {
-    const list = await this.findByPatientIdOrderByDate(patientId);
-    const index = list.findIndex((c) => c.id === currentConsultaId);
-    if (index <= 0) return null;
-    for (let i = index - 1; i >= 0; i--) {
-      const c = list[i]!;
-      if (c.clinico && c.estrutura) return c;
+    const atual = await this.findById(currentConsultaId);
+    if (!atual) return null;
+
+    if (this.userId) {
+      const { data, error } = await this.supabase
+        .from(TABLE)
+        .select("*, pacientes!inner(user_id)")
+        .eq("patient_id", patientId)
+        .eq("pacientes.user_id", this.userId)
+        .lt("date", atual.date)
+        .not("clinico", "is", null)
+        .not("estrutura", "is", null)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(`ConsultaRepositorySupabase.getUltimaConsultaAntesDe: ${error.message}`);
+      if (!data) return null;
+      const { pacientes: _pacientes, ...row } = data as unknown as Record<string, unknown> & { pacientes?: unknown };
+      return rowToConsulta(row);
     }
-    return null;
+
+    const { data, error } = await this.supabase
+      .from(TABLE)
+      .select("*")
+      .eq("patient_id", patientId)
+      .lt("date", atual.date)
+      .not("clinico", "is", null)
+      .not("estrutura", "is", null)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(`ConsultaRepositorySupabase.getUltimaConsultaAntesDe: ${error.message}`);
+    return data ? rowToConsulta(data as unknown as Record<string, unknown>) : null;
   }
 
   async delete(id: string): Promise<void> {

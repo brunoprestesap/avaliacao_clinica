@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthenticatedUseCases } from "@/app/use-cases";
+import { isConsultaComResultado } from "@/src/domain/types";
 import {
   CLASSIFICACAO_CLINICA_LABELS,
   CLASSIFICACAO_ESTRUTURA_LABELS,
@@ -36,8 +37,11 @@ export default async function ResultadoPage({
     redirect("/avaliacao/nova");
   }
   const { consulta } = resultado;
-  const c = consulta.clinico!;
-  const e = consulta.estrutura!;
+  if (!isConsultaComResultado(consulta)) {
+    redirect("/avaliacao/nova");
+  }
+  const c = consulta.clinico;
+  const e = consulta.estrutura;
   const comp = consulta.comparacao;
   const jaSalvou = Boolean(consulta.impressao_clinica);
 

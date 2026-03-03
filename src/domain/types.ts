@@ -98,3 +98,17 @@ export interface Paciente {
   nome: string;
   identificador: string; // prontuário ou CPF
 }
+
+/** Type guard: consulta possui dados clínicos e estruturais preenchidos */
+export function isConsultaComResultado(
+  c: Consulta
+): c is Consulta & { clinico: ClinicoResultado; estrutura: EstruturaResultado } {
+  return c.clinico != null && c.estrutura != null;
+}
+
+/** Type guard: consulta está finalizada (possui resultado + fase indicada) */
+export function isConsultaFinalizada(
+  c: Consulta
+): c is Consulta & { clinico: ClinicoResultado; estrutura: EstruturaResultado; fase_indicada: FaseIndicadaLabel } {
+  return isConsultaComResultado(c) && c.fase_indicada != null;
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fundo: cor primária do app (#41431B - verde-oliva escuro) -->
+  <rect width="512" height="512" rx="96" fill="#41431B"/>
+
+  <!-- Ponto de avaliação (círculo superior) -->
+  <circle cx="256" cy="112" r="48" fill="#AEB784"/>
+  <circle cx="256" cy="112" r="28" fill="#F8F3E1"/>
+
+  <!-- Três barras representando as fases da Matriz FASE -->
+  <!-- Integral (mais ampla) -->
+  <rect x="72" y="188" width="368" height="56" rx="28" fill="#F8F3E1"/>
+  <!-- Núcleo -->
+  <rect x="136" y="268" width="240" height="56" rx="28" fill="#AEB784"/>
+  <!-- Essência (mais estreita) -->
+  <rect x="200" y="348" width="112" height="56" rx="28" fill="#F8F3E1" opacity="0.75"/>
+</svg>

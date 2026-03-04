@@ -90,7 +90,7 @@ export function HistoricoConsultaItem({
                     Clínico
                   </span>
                   <span className="font-semibold tabular-nums text-foreground">
-                    {consulta.clinico.score_total}
+                    {consulta.clinico?.score_total ?? 0}
                   </span>
                   <Activity className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden />
                 </div>

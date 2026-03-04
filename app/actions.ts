@@ -67,10 +67,25 @@ function pathAvaliacao(consultaId: string, segment = "") {
   return segment ? `${base}/${segment}` : base;
 }
 
-/** Valida id de consulta (UUID ou string alfanumérica com hífens) para evitar path traversal. */
+const ID_SEGURO_REGEX = /^[a-zA-Z0-9-]{1,64}$/;
+
+/** Valida id (consulta, paciente, etc.) para evitar path traversal. */
+function isIdSeguro(id: unknown): id is string {
+  return typeof id === "string" && id.length > 0 && ID_SEGURO_REGEX.test(id);
+}
+
 function isConsultaIdValido(id: unknown): id is string {
-  if (typeof id !== "string" || !id.length) return false;
-  return /^[a-zA-Z0-9-]{1,64}$/.test(id);
+  return isIdSeguro(id);
+}
+
+function isPatientIdValido(id: unknown): id is string {
+  return isIdSeguro(id);
+}
+
+/** Extrai e normaliza string de FormData (trim; vazio vira ""). */
+function getFormDataString(formData: FormData, key: string): string {
+  const raw = formData.get(key);
+  return typeof raw === "string" ? raw.trim() : "";
 }
 
 /** Verifica se o erro é o redirect do Next.js (que deve ser re-lançado, não tratado). */
@@ -87,8 +102,8 @@ function isRedirectError(e: unknown): boolean {
 export async function iniciarAvaliacao(formData: FormData) {
   const { uc, user } = await getAuthenticatedUseCases();
 
-  const nome = (formData.get("nome") as string)?.trim() ?? "";
-  const identificador = (formData.get("identificador") as string)?.trim() ?? "";
+  const nome = getFormDataString(formData, "nome");
+  const identificador = getFormDataString(formData, "identificador");
   if (!nome || !identificador) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Nome e identificador são obrigatórios."));
   }
@@ -104,6 +119,34 @@ export async function iniciarAvaliacao(formData: FormData) {
     if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "Erro ao iniciar avaliação.";
     redirect("/avaliacao/nova?error=" + encodeURIComponent(msg));
+  }
+}
+
+export type AtualizarPacienteResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function atualizarPaciente(
+  formData: FormData
+): Promise<AtualizarPacienteResult> {
+  const patientId = formData.get("patientId");
+  if (!isPatientIdValido(patientId)) {
+    return { ok: false, error: "Paciente não identificado." };
+  }
+  const nome = getFormDataString(formData, "nome");
+  const identificador = getFormDataString(formData, "identificador");
+  if (!nome || !identificador) {
+    return { ok: false, error: "Nome e identificador são obrigatórios." };
+  }
+  try {
+    const { uc } = await getAuthenticatedUseCases();
+    await uc.atualizarPaciente(patientId, { nome, identificador });
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Erro ao atualizar.",
+    };
   }
 }
 

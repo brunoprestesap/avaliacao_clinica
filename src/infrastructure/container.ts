@@ -21,6 +21,7 @@ import { createListarHistoricoPaciente } from "@/src/application/use-cases/Lista
 import { createObterConsulta } from "@/src/application/use-cases/ObterConsulta";
 import { createObterResultadoParaExibicao } from "@/src/application/use-cases/ObterResultadoParaExibicao";
 import { createExcluirAvaliacaoEmBranco } from "@/src/application/use-cases/ExcluirAvaliacaoEmBranco";
+import { createAtualizarPaciente } from "@/src/application/use-cases/AtualizarPaciente";
 
 const useSupabase = process.env.PERSISTENCE === "supabase";
 
@@ -74,6 +75,7 @@ export function createAvaliacaoUseCases(
     obterConsulta: createObterConsulta(consultaRepo),
     obterResultadoParaExibicao: createObterResultadoParaExibicao(consultaRepo),
     excluirAvaliacaoEmBranco: createExcluirAvaliacaoEmBranco(consultaRepo),
+    atualizarPaciente: createAtualizarPaciente(pacienteRepo),
     listarPacientes: async (opts) => {
       const rawPage = opts?.page ?? 1;
       const page =

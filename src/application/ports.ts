@@ -44,5 +44,9 @@ export interface AvaliacaoUseCases {
   obterResultadoParaExibicao(consultaId: string): Promise<ResultadoCompletoDTO | null>;
   listarPacientes(opts?: ListarPacientesInput): Promise<ListarPacientesResult>;
   obterPaciente(patientId: string): Promise<Paciente | null>;
+  atualizarPaciente(
+    patientId: string,
+    data: { nome: string; identificador: string }
+  ): Promise<void>;
   excluirAvaliacaoEmBranco(consultaId: string): Promise<string>;
 }

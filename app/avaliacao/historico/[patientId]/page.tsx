@@ -4,6 +4,7 @@ import { getAuthenticatedUseCases } from "@/app/use-cases";
 import { excluirAvaliacao } from "@/app/actions";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { EditarCadastroButton } from "@/app/components/EditarCadastroButton";
 import { HistoricoConsultaItem } from "../HistoricoConsultaItem";
 
 export default async function HistoricoPage({
@@ -47,6 +48,7 @@ export default async function HistoricoPage({
                   Prontuário: {paciente.identificador}
                 </CardDescription>
               </div>
+              <EditarCadastroButton paciente={paciente} />
             </div>
           </CardHeader>
           <CardContent>

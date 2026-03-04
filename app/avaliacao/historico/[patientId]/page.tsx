@@ -61,11 +61,11 @@ export default async function HistoricoPage({
                   {errorMessage}
                 </p>
               ) : null}
-              {temMais && (
+              {temMais ? (
                 <p className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                   Exibindo as {LIMITE_HISTORICO} consultas mais recentes de {consultas.length} registradas.
                 </p>
-              )}
+              ) : null}
               {consultasRecentesPrimeiro.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-12 px-4 text-center">
                   <Calendar className="h-8 w-8 text-muted-foreground/50 mb-3" />

@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { excluirAvaliacao } from "@/app/actions";
-import { Calendar, Activity, Trash2, FileDown } from "lucide-react";
+import { Calendar, Activity, Trash2, FileDown, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RespostasQuestionarioDialog } from "@/app/components/RespostasQuestionarioDialog";
+import { excluirAvaliacao } from "@/app/actions";
 import { formatarDataExibicao } from "@/lib/formatacao";
 import type { Consulta } from "@/src/domain";
 
@@ -19,9 +23,11 @@ export function HistoricoConsultaItem({
   patientId,
   onExcluir,
 }: HistoricoConsultaItemProps) {
+  const [respostasOpen, setRespostasOpen] = useState(false);
   const dataExibicao = formatarDataExibicao(consulta.date);
   const pdfHref = `${PDF_API_PATH}/${consulta.id}/pdf`;
   const isFinalizada = Boolean(consulta.impressao_clinica?.trim());
+  const temRespostas = consulta.clinico != null;
 
   return (
     <li className="rounded-2xl border border-border/80 bg-card p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
@@ -63,6 +69,19 @@ export function HistoricoConsultaItem({
           </div>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+          {temRespostas ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shrink-0 min-h-11 rounded-xl border-border/80"
+              onClick={() => setRespostasOpen(true)}
+              aria-label="Ver respostas do questionário desta consulta"
+            >
+              <ClipboardList className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="hidden sm:inline">Ver respostas</span>
+            </Button>
+          ) : null}
           {isFinalizada && (
             <a
               href={pdfHref}
@@ -94,6 +113,13 @@ export function HistoricoConsultaItem({
           )}
         </div>
       </div>
+      {temRespostas ? (
+        <RespostasQuestionarioDialog
+          consulta={consulta}
+          open={respostasOpen}
+          onOpenChange={setRespostasOpen}
+        />
+      ) : null}
     </li>
   );
 }

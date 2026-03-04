@@ -48,5 +48,5 @@ export interface AvaliacaoUseCases {
     patientId: string,
     data: { nome: string; identificador: string }
   ): Promise<void>;
-  excluirAvaliacaoEmBranco(consultaId: string): Promise<string>;
+  excluirAvaliacao(consultaId: string): Promise<string>;
 }

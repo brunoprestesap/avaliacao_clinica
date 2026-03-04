@@ -353,11 +353,14 @@ export async function excluirAvaliacao(formData: FormData) {
   const consultaId = formData.get("consultaId");
   const patientId = (formData.get("patientId") as string)?.trim() ?? "";
   if (!isConsultaIdValido(consultaId)) {
-    redirect(patientId ? `/avaliacao/historico/${patientId}?error=` + encodeURIComponent("Consulta não identificada.") : "/");
+    const url = patientId
+      ? `/avaliacao/historico/${patientId}?error=${encodeURIComponent("Consulta não identificada.")}`
+      : "/";
+    redirect(url);
   }
   try {
-    const returnedPatientId = await uc.excluirAvaliacaoEmBranco(consultaId);
-    redirect(`/avaliacao/historico/${returnedPatientId}`);
+    const returnedPatientId = await uc.excluirAvaliacao(consultaId);
+    redirect(`/avaliacao/historico/${returnedPatientId}?toast=excluido`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "Não foi possível excluir.";

@@ -20,7 +20,7 @@ import { createCalcularResultadoCompleto } from "@/src/application/use-cases/Cal
 import { createListarHistoricoPaciente } from "@/src/application/use-cases/ListarHistoricoPaciente";
 import { createObterConsulta } from "@/src/application/use-cases/ObterConsulta";
 import { createObterResultadoParaExibicao } from "@/src/application/use-cases/ObterResultadoParaExibicao";
-import { createExcluirAvaliacaoEmBranco } from "@/src/application/use-cases/ExcluirAvaliacaoEmBranco";
+import { createExcluirAvaliacao } from "@/src/application/use-cases/ExcluirAvaliacao";
 import { createAtualizarPaciente } from "@/src/application/use-cases/AtualizarPaciente";
 
 const useSupabase = process.env.PERSISTENCE === "supabase";
@@ -74,7 +74,7 @@ export function createAvaliacaoUseCases(
     listarHistoricoPaciente: createListarHistoricoPaciente(consultaRepo),
     obterConsulta: createObterConsulta(consultaRepo),
     obterResultadoParaExibicao: createObterResultadoParaExibicao(consultaRepo),
-    excluirAvaliacaoEmBranco: createExcluirAvaliacaoEmBranco(consultaRepo),
+    excluirAvaliacao: createExcluirAvaliacao(consultaRepo),
     atualizarPaciente: createAtualizarPaciente(pacienteRepo),
     listarPacientes: async (opts) => {
       const rawPage = opts?.page ?? 1;

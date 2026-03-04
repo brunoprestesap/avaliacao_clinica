@@ -6,15 +6,16 @@ import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { EditarCadastroButton } from "@/app/components/EditarCadastroButton";
 import { HistoricoConsultaItem } from "../HistoricoConsultaItem";
+import { HistoricoToasts } from "../HistoricoToasts";
 
 export default async function HistoricoPage({
   params,
   searchParams,
 }: {
   params: Promise<{ patientId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; toast?: string }>;
 }) {
-  const [{ patientId }, { error: errorMessage }, { uc }] = await Promise.all([
+  const [{ patientId }, { error: errorMessage, toast: toastParam }, { uc }] = await Promise.all([
     params,
     searchParams,
     getAuthenticatedUseCases(),
@@ -32,6 +33,7 @@ export default async function HistoricoPage({
 
   return (
     <div className="page-container">
+      <HistoricoToasts toastParam={toastParam} error={errorMessage} />
       <div className="content-width-medium flex flex-col gap-6">
         <Link href="/" className="link-back inline-flex items-center w-fit mb-2">
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao início
@@ -56,11 +58,6 @@ export default async function HistoricoPage({
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 Histórico de Consultas
               </h3>
-              {errorMessage ? (
-                <p className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  {errorMessage}
-                </p>
-              ) : null}
               {temMais ? (
                 <p className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                   Exibindo as {LIMITE_HISTORICO} consultas mais recentes de {consultas.length} registradas.

@@ -48,7 +48,6 @@ export function LoginForm({
       });
       if (result?.ok) {
         router.push("/");
-        router.refresh();
         return;
       }
       if (result?.error) {

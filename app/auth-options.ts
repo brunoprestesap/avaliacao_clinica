@@ -7,8 +7,9 @@ const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
   useSecureCookies:
-    (process.env.NEXTAUTH_URL ?? "").startsWith("https://") ||
-    !!process.env.VERCEL,
+    process.env.NEXTAUTH_URL !== undefined
+      ? process.env.NEXTAUTH_URL.startsWith("https://")
+      : !!process.env.VERCEL,
   providers: [
     CredentialsProvider({
       id: "credentials",

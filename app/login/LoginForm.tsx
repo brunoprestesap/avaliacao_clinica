@@ -62,11 +62,6 @@ export function LoginForm({
     }
   }
 
-  function handleGoogleSignIn() {
-    setClientError(null);
-    signIn("google", { callbackUrl: "/" });
-  }
-
   useEffect(() => {
     if (success) toast.success(safeDecodeError(success));
   }, [success]);
@@ -116,23 +111,6 @@ export function LoginForm({
           ) : (
             "Entrar"
           )}
-        </Button>
-        <div className="relative my-2">
-          <span className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </span>
-          <span className="relative flex justify-center text-xs uppercase text-muted-foreground">
-            ou
-          </span>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-14 w-full rounded-2xl text-lg font-semibold border-2"
-          onClick={handleGoogleSignIn}
-          disabled={pending}
-        >
-          Entrar com Google
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground mt-6">

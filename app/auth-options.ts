@@ -1,6 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import { getAuthService } from "@/src/infrastructure/auth-container";
 
 const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
@@ -34,35 +33,16 @@ export const authOptions: NextAuthOptions = {
         return null;
       },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
   ],
   session: {
     strategy: "jwt",
     maxAge: SEVEN_DAYS_SECONDS,
   },
   callbacks: {
-    async signIn({ account, profile }) {
-      if (account?.provider === "google" && profile?.email) {
-        const authService = getAuthService();
-        await authService.registerOrFindOAuthUser(profile.email as string);
-        return true;
-      }
-      return true;
-    },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       if (user?.id && user?.email) {
         token.id = user.id;
         token.email = user.email;
-        return token;
-      }
-      if (account?.provider === "google" && profile?.email) {
-        const authService = getAuthService();
-        const dto = await authService.registerOrFindOAuthUser(profile.email as string);
-        token.id = dto.id;
-        token.email = dto.email;
       }
       return token;
     },

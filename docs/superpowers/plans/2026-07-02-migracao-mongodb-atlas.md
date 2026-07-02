@@ -1889,7 +1889,7 @@ Criar `scripts/migrate-supabase-to-mongo.ts`:
  * (ou: npx dotenv -e .env.production.local -- npx tsx scripts/migrate-supabase-to-mongo.ts)
  */
 import "dotenv/config";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import mongoose from "mongoose";
 import {
   PacienteModel,
@@ -1920,7 +1920,7 @@ const PAGE_SIZE = 1000;
  * limita a resposta ao seu max-rows padrão (comumente 1000) e trunca silenciosamente
  * tabelas maiores, sem erro, resultando em perda de dados na migração.
  */
-async function fetchAllRows<T>(supabase: ReturnType<typeof createClient>, table: string): Promise<T[]> {
+async function fetchAllRows<T>(supabase: SupabaseClient, table: string): Promise<T[]> {
   const rows: T[] = [];
   let offset = 0;
   for (;;) {

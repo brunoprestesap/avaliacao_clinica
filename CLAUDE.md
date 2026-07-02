@@ -37,7 +37,7 @@ O fluxo de dependência é sempre de fora para dentro: `app → application → 
 
 **Multi-tenancy na aplicação** — não há RLS no Supabase. O `userId` é passado explicitamente para todos os repositórios via `container.ts`. O cliente Supabase server-side usa service role key.
 
-**Persistência dupla** — variável de ambiente `PERSISTENCE=supabase|json`. Em desenvolvimento sem Supabase, os repositórios JSON em `src/infrastructure/repositories/*Json.ts` servem de fallback. A troca é transparente graças às interfaces de `ports.ts`.
+**Persistência dupla** — variável de ambiente `PERSISTENCE=mongo|json`. Em desenvolvimento sem MongoDB, os repositórios JSON em `src/infrastructure/repositories/*Json.ts` servem de fallback. A troca é transparente graças às interfaces de `ports.ts`.
 
 **Desbloqueio de consulta** — consultas ficam bloqueadas após a fase estrutural. O acesso é liberado por senha da equipe de saúde, que gera um token HMAC-assinado (15 min) armazenado em cookie httpOnly. Implementado em `src/infrastructure/unlockPassword.ts` e `app/actions.ts`.
 
@@ -50,6 +50,7 @@ O fluxo de dependência é sempre de fora para dentro: `app → application → 
 | `src/domain/constants.ts` | Labels de itens clínicos, pilares e escalas |
 | `src/application/ports.ts` | Interfaces `ConsultaRepository`, `PacienteRepository`, `AvaliacaoUseCases` |
 | `src/infrastructure/container.ts` | Injeção de dependência — ponto central que conecta use cases com repositórios |
+| `src/infrastructure/mongo/models.ts` / `mongo/connection.ts` | Schemas e conexão Mongoose (substituem `supabase/database.types.ts` e `supabase/server.ts`) |
 | `app/actions.ts` | Server actions principais — identificar paciente, salvar formulários, desbloquear, calcular resultado |
 | `app/auth-options.ts` | NextAuth (credentials + Google OAuth, JWT 7 dias) |
 | `middleware.ts` | Proteção de rotas — libera `_next/static`, `favicon.ico`, `manifest.webmanifest`, imagens |
@@ -83,7 +84,7 @@ Fase ESSÊNCIA: caso contrário
 ## Ambiente
 
 Variáveis obrigatórias (ver `.env.example`):
-- `PERSISTENCE` — `json` (dev) ou `supabase` (prod)
+- `PERSISTENCE` — `json` (dev) ou `mongo` (prod)
 - `NEXTAUTH_SECRET` e `NEXTAUTH_URL`
-- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `MONGODB_URI` — connection string do MongoDB Atlas
 - Email: `RESEND_API_KEY`, `EMAIL_FROM` (para recuperação de senha)

@@ -25,7 +25,7 @@ Clean Architecture em três camadas:
 ```
 src/domain/          → Lógica pura: tipos, cálculos, constantes
 src/application/     → Use cases + ports (interfaces de repositório)
-src/infrastructure/  → Implementações (Supabase, JSON, auth)
+src/infrastructure/  → Implementações (MongoDB, JSON, auth)
 app/                 → Next.js App Router: pages, components, server actions
 ```
 
@@ -35,7 +35,7 @@ O fluxo de dependência é sempre de fora para dentro: `app → application → 
 
 **Mutações via Server Actions** — nenhuma API route separada para mutações (só `/api/auth/*` e `/api/avaliacao/[id]/pdf`). Toda ação começa com `"use server"` e valida a sessão.
 
-**Multi-tenancy na aplicação** — não há RLS no Supabase. O `userId` é passado explicitamente para todos os repositórios via `container.ts`. O cliente Supabase server-side usa service role key.
+**Multi-tenancy na aplicação** — não há RLS nativo no MongoDB. O `userId` é passado explicitamente para todos os repositórios (via `container.ts`), que filtram cada query por `user_id`.
 
 **Persistência dupla** — variável de ambiente `PERSISTENCE=mongo|json`. Em desenvolvimento sem MongoDB, os repositórios JSON em `src/infrastructure/repositories/*Json.ts` servem de fallback. A troca é transparente graças às interfaces de `ports.ts`.
 

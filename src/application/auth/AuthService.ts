@@ -178,7 +178,7 @@ export class AuthService {
   }
 }
 
-/** Factory: cria AuthService com repositórios Supabase e envio de email. */
+/** Factory: cria AuthService com repositórios Mongo e envio de email. */
 export function createAuthService(
   userRepo: UserRepository,
   tokenRepo: AuthTokenRepository,

@@ -4,7 +4,7 @@ import type { Paciente } from "@/src/domain";
 export interface IdentificarPacienteInput {
   nome: string;
   identificador: string;
-  /** Id do usuário autenticado (obrigatório com Supabase/RLS para novos pacientes). */
+  /** Id do usuário autenticado (obrigatório para isolar pacientes por tenant). */
   userId?: string;
 }
 

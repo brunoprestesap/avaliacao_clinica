@@ -4,20 +4,38 @@ import { redirect } from "next/navigation";
 import { hash } from "bcryptjs";
 import { getAuthService } from "@/src/infrastructure/auth-container";
 
-const AUTH_CONFIG_ERROR =
-  "Autenticação não configurada. Configure as variáveis do Supabase no .env.local.";
+const AUTH_CONFIG_ERROR = "Autenticação não configurada. Configure MONGODB_URI no .env.local.";
 const BCRYPT_ROUNDS = 10;
 
-function getAuthServiceOrRedirect(buildErrorRedirect: (message: string) => string) {
+/** Verifica se o erro é o redirect do Next.js (que deve ser re-lançado, não tratado). */
+function isRedirectError(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "digest" in e &&
+    typeof (e as { digest?: string }).digest === "string" &&
+    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
+/**
+ * Envolve a obtenção do AuthService + a chamada assíncrona que o usa.
+ * Com Mongo, o erro de configuração ausente (MONGODB_URI) só é lançado dentro
+ * de getDb(), chamado de forma assíncrona nos métodos do repositório — não mais
+ * de forma síncrona em getAuthService() como acontecia com o Supabase. Por isso
+ * o catch precisa envolver a chamada assíncrona também, não só a construção do serviço.
+ */
+async function withAuthConfigErrorHandling<T>(
+  buildErrorRedirect: (message: string) => string,
+  fn: (authService: ReturnType<typeof getAuthService>) => Promise<T>
+): Promise<T> {
   try {
-    return getAuthService();
+    const authService = getAuthService();
+    return await fn(authService);
   } catch (e) {
+    if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "";
-    if (
-      !msg ||
-      msg.includes("Missing NEXT_PUBLIC_SUPABASE") ||
-      msg.includes("SUPABASE")
-    ) {
+    if (!msg || msg.includes("Missing MONGODB_URI")) {
       redirect(buildErrorRedirect(AUTH_CONFIG_ERROR));
     }
     throw e;
@@ -46,11 +64,11 @@ export async function signupAction(formData: FormData) {
     );
   }
 
-  const authService = getAuthServiceOrRedirect(
-    (msg) => "/auth/cadastro?error=" + encodeURIComponent(msg)
-  );
   const passwordHash = await hash(password, BCRYPT_ROUNDS);
-  const result = await authService.registerUser({ email, passwordHash });
+  const result = await withAuthConfigErrorHandling(
+    (msg) => "/auth/cadastro?error=" + encodeURIComponent(msg),
+    (authService) => authService.registerUser({ email, passwordHash })
+  );
   if (!result.success) {
     redirect(
       "/auth/cadastro?error=" +
@@ -71,10 +89,10 @@ export async function requestResetAction(formData: FormData) {
     );
   }
 
-  const authService = getAuthServiceOrRedirect(
-    (msg) => "/auth/recuperar-senha?error=" + encodeURIComponent(msg)
+  await withAuthConfigErrorHandling(
+    (msg) => "/auth/recuperar-senha?error=" + encodeURIComponent(msg),
+    (authService) => authService.requestPasswordReset({ email })
   );
-  await authService.requestPasswordReset({ email });
 
   redirect(
     "/auth/recuperar-senha?success=" +
@@ -103,15 +121,12 @@ export async function resetPasswordAction(formData: FormData) {
     redirect(errorQuery("As senhas não coincidem."));
   }
 
-  const authService = getAuthServiceOrRedirect(
-    (msg) => errorQuery(msg)
-  );
   const passwordHash = await hash(password, BCRYPT_ROUNDS);
-  const result = await authService.resetPassword({
-    tokenId: id,
-    rawToken: token,
-    passwordHash,
-  });
+  const result = await withAuthConfigErrorHandling(
+    (msg) => errorQuery(msg),
+    (authService) =>
+      authService.resetPassword({ tokenId: id, rawToken: token, passwordHash })
+  );
   if (!result.success) {
     redirect(errorQuery(result.message));
   }
@@ -129,10 +144,10 @@ export async function unlockAccountAction(formData: FormData) {
     redirect(errorQuery("Link inválido ou expirado. Solicite um novo pelo login."));
   }
 
-  const authService = getAuthServiceOrRedirect(
-    (msg) => errorQuery(msg)
+  const result = await withAuthConfigErrorHandling(
+    (msg) => errorQuery(msg),
+    (authService) => authService.unlockAccount({ tokenId: id, rawToken: token })
   );
-  const result = await authService.unlockAccount({ tokenId: id, rawToken: token });
   if (!result.success) {
     redirect(errorQuery(result.message));
   }

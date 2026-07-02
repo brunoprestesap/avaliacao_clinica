@@ -1625,6 +1625,162 @@ git commit -m "refactor: substitui Supabase por MongoDB em todo o wiring da apli
 
 ---
 
+### Task 6b: Corrigir tratamento de erro de configuração em `app/auth-actions.ts`
+
+**Contexto:** encontrado no review da Task 6 — não fazia parte do escopo original das 8 tasks (lacuna do plano). `app/auth-actions.ts` tinha um `getAuthServiceOrRedirect()` que envolvia só a chamada síncrona `getAuthService()` num try/catch, checando mensagens como `"SUPABASE"`/`"Missing NEXT_PUBLIC_SUPABASE"` para redirecionar com uma mensagem amigável em caso de configuração ausente. Isso funcionava porque `getSupabase()` (antigo) lançava exceção **de forma síncrona** dentro de `getAuthService()`. Com Mongo, `getAuthService()` só constrói `new UserRepositoryMongo()`/`new AuthTokenRepositoryMongo()` (sem efeito colateral) — o erro de `MONGODB_URI` ausente só é lançado depois, dentro de `getDb()`, chamado de forma assíncrona dentro de cada método do reposit��rio. Ou seja, o `try/catch` atual nunca mais pega esse erro — ele escaparia como exceção não tratada.
+
+**Files:**
+- Modify: `app/auth-actions.ts`
+
+**Interfaces:** nenhuma nova — comportamento externo (redirects, mensagens) preservado, só a causa raiz do bug corrigida.
+
+- [ ] **Step 1: Reescrever o wrapper de tratamento de erro**
+
+Trocar:
+```ts
+const AUTH_CONFIG_ERROR =
+  "Autenticação não configurada. Configure as variáveis do Supabase no .env.local.";
+const BCRYPT_ROUNDS = 10;
+
+function getAuthServiceOrRedirect(buildErrorRedirect: (message: string) => string) {
+  try {
+    return getAuthService();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (
+      !msg ||
+      msg.includes("Missing NEXT_PUBLIC_SUPABASE") ||
+      msg.includes("SUPABASE")
+    ) {
+      redirect(buildErrorRedirect(AUTH_CONFIG_ERROR));
+    }
+    throw e;
+  }
+}
+```
+por:
+```ts
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+
+const AUTH_CONFIG_ERROR = "Autenticação não configurada. Configure MONGODB_URI no .env.local.";
+const BCRYPT_ROUNDS = 10;
+
+/**
+ * Envolve a obtenção do AuthService + a chamada assíncrona que o usa.
+ * Com Mongo, o erro de configuração ausente (MONGODB_URI) só é lançado dentro
+ * de getDb(), chamado de forma assíncrona nos métodos do repositório — não mais
+ * de forma síncrona em getAuthService() como acontecia com o Supabase. Por isso
+ * o catch precisa envolver a chamada assíncrona também, não só a construção do serviço.
+ */
+async function withAuthConfigErrorHandling<T>(
+  buildErrorRedirect: (message: string) => string,
+  fn: (authService: ReturnType<typeof getAuthService>) => Promise<T>
+): Promise<T> {
+  try {
+    const authService = getAuthService();
+    return await fn(authService);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    const msg = e instanceof Error ? e.message : "";
+    if (!msg || msg.includes("Missing MONGODB_URI")) {
+      redirect(buildErrorRedirect(AUTH_CONFIG_ERROR));
+    }
+    throw e;
+  }
+}
+```
+
+Nota: `next/dist/client/components/redirect-error` é o caminho interno usado em versões recentes do Next.js para `isRedirectError` — **antes de escrever este import, verificar no `package.json`/`node_modules/next` se `isRedirectError` está exportado publicamente em `next/navigation` nesta versão do Next (16.1.6)**; se estiver, preferir `import { isRedirectError } from "next/navigation";` em vez do caminho interno. Buscar por `isRedirectError` em `app/actions.ts` (usado lá em `definirSenhaDesbloqueio`) para copiar exatamente o import já usado no projeto.
+
+- [ ] **Step 2: Atualizar as quatro server actions para usar o novo wrapper**
+
+Em `signupAction`, trocar:
+```ts
+  const authService = getAuthServiceOrRedirect(
+    (msg) => "/auth/cadastro?error=" + encodeURIComponent(msg)
+  );
+  const passwordHash = await hash(password, BCRYPT_ROUNDS);
+  const result = await authService.registerUser({ email, passwordHash });
+```
+por:
+```ts
+  const passwordHash = await hash(password, BCRYPT_ROUNDS);
+  const result = await withAuthConfigErrorHandling(
+    (msg) => "/auth/cadastro?error=" + encodeURIComponent(msg),
+    (authService) => authService.registerUser({ email, passwordHash })
+  );
+```
+
+Em `requestResetAction`, trocar:
+```ts
+  const authService = getAuthServiceOrRedirect(
+    (msg) => "/auth/recuperar-senha?error=" + encodeURIComponent(msg)
+  );
+  await authService.requestPasswordReset({ email });
+```
+por:
+```ts
+  await withAuthConfigErrorHandling(
+    (msg) => "/auth/recuperar-senha?error=" + encodeURIComponent(msg),
+    (authService) => authService.requestPasswordReset({ email })
+  );
+```
+
+Em `resetPasswordAction`, trocar:
+```ts
+  const authService = getAuthServiceOrRedirect(
+    (msg) => errorQuery(msg)
+  );
+  const passwordHash = await hash(password, BCRYPT_ROUNDS);
+  const result = await authService.resetPassword({
+    tokenId: id,
+    rawToken: token,
+    passwordHash,
+  });
+```
+por:
+```ts
+  const passwordHash = await hash(password, BCRYPT_ROUNDS);
+  const result = await withAuthConfigErrorHandling(
+    (msg) => errorQuery(msg),
+    (authService) =>
+      authService.resetPassword({ tokenId: id, rawToken: token, passwordHash })
+  );
+```
+
+Em `unlockAccountAction`, trocar:
+```ts
+  const authService = getAuthServiceOrRedirect(
+    (msg) => errorQuery(msg)
+  );
+  const result = await authService.unlockAccount({ tokenId: id, rawToken: token });
+```
+por:
+```ts
+  const result = await withAuthConfigErrorHandling(
+    (msg) => errorQuery(msg),
+    (authService) => authService.unlockAccount({ tokenId: id, rawToken: token })
+  );
+```
+
+- [ ] **Step 3: Rodar build e testes**
+
+```bash
+npm test
+npm run build
+```
+
+Expected: ambos passam sem erros de tipo (o `ReturnType<typeof getAuthService>` deve inferir corretamente o tipo do serviço retornado).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add app/auth-actions.ts
+git commit -m "fix: corrige tratamento de erro de configuração para MongoDB em auth-actions.ts"
+```
+
+---
+
 ### Task 7: Remover código morto do Supabase
 
 **Files:**

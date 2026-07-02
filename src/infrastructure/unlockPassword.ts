@@ -4,10 +4,9 @@
  * Não confundir com desbloqueio de conta (auth), que usa account_unlock_tokens e auth-actions.
  */
 import { scryptSync, randomBytes } from "node:crypto";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, ProfileRow } from "@/src/infrastructure/supabase/database.types";
+import { getDb } from "@/src/infrastructure/mongo/connection";
+import { ProfileModel } from "@/src/infrastructure/mongo/models";
 
-const TABLE = "profiles";
 const SCRYPT_KEYLEN = 64;
 const SCRYPT_N = 16384;
 const SALT_BYTES = 16;
@@ -18,56 +17,24 @@ export interface UnlockPasswordStored {
   salt: string;
 }
 
-/** Retorna true se o erro indica que a tabela profiles não existe (migration não aplicada). */
-function isTableNotFoundError(message: string): boolean {
-  return (
-    message.includes("Could not find the table") ||
-    message.includes("schema cache") ||
-    message.includes("does not exist")
-  );
-}
-
 /** Obtém hash/salt da senha de desbloqueio da equipe de saúde (profiles) para o usuário. */
-export async function getUnlockPasswordHash(
-  supabase: SupabaseClient<Database>,
-  userId: string
-): Promise<UnlockPasswordStored | null> {
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select("unlock_password_hash, unlock_password_salt")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) {
-    if (isTableNotFoundError(error.message)) return null;
-    throw new Error(`getUnlockPasswordHash: ${error.message}`);
-  }
-  const row = data as Pick<ProfileRow, "unlock_password_hash" | "unlock_password_salt"> | null;
-  if (!row?.unlock_password_hash || !row?.unlock_password_salt) return null;
-  return { hash: row.unlock_password_hash, salt: row.unlock_password_salt };
+export async function getUnlockPasswordHash(userId: string): Promise<UnlockPasswordStored | null> {
+  await getDb();
+  const doc = await ProfileModel.findOne({ user_id: userId }).lean();
+  if (!doc?.unlock_password_hash || !doc?.unlock_password_salt) return null;
+  return { hash: doc.unlock_password_hash, salt: doc.unlock_password_salt };
 }
 
 /** Define a senha de desbloqueio da equipe de saúde (Configurações). */
-export async function setUnlockPassword(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  senhaPlain: string
-): Promise<void> {
+export async function setUnlockPassword(userId: string, senhaPlain: string): Promise<void> {
+  await getDb();
   const salt = randomBytes(SALT_BYTES).toString("hex");
   const storedHash = hashPassword(senhaPlain, salt);
-  const row: Database["public"]["Tables"]["profiles"]["Insert"] = {
-    user_id: userId,
-    unlock_password_hash: storedHash,
-    unlock_password_salt: salt,
-  };
-  const { error } = await supabase.from(TABLE).upsert(row as never, { onConflict: "user_id" });
-  if (error) {
-    if (isTableNotFoundError(error.message)) {
-      throw new Error(
-        "A tabela de senha de desbloqueio ainda não existe. Execute as migrações do Supabase (ex.: npx supabase db push)."
-      );
-    }
-    throw new Error(`setUnlockPassword: ${error.message}`);
-  }
+  await ProfileModel.findOneAndUpdate(
+    { user_id: userId },
+    { unlock_password_hash: storedHash, unlock_password_salt: salt },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
 }
 
 export function hashPassword(senhaPlain: string, saltHex: string): string {

@@ -1793,8 +1793,9 @@ git commit -m "fix: corrige tratamento de erro de configuração para MongoDB em
 - Delete: `src/infrastructure/repositories/UserRepositorySupabase.ts`
 - Delete: `src/infrastructure/repositories/AuthTokenRepositorySupabase.ts`
 - Delete: `test-db.ts`
+- Delete: `scripts/migrate-json-to-supabase.ts` (importa `@supabase/supabase-js` diretamente — quebraria após a remoção da dependência; lacuna do plano, corrigida durante a execução da Task 7)
 - Delete: `supabase/migrations/` (diretório inteiro)
-- Modify: `package.json` (remover `@supabase/supabase-js`, `@supabase/ssr`)
+- Modify: `package.json` (remover `@supabase/supabase-js`, `@supabase/ssr`, e o script `migrate:json-to-supabase`)
 
 **Interfaces:**
 - Consumes: nada (limpeza pura — a Task 6 já garantiu que nada importa esses arquivos).

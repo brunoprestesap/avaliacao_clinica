@@ -5,7 +5,7 @@
  * (ou: npx dotenv -e .env.production.local -- npx tsx scripts/migrate-supabase-to-mongo.ts)
  */
 import "dotenv/config";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import mongoose from "mongoose";
 import {
   PacienteModel,
@@ -29,14 +29,76 @@ if (!mongoUri) {
   process.exit(1);
 }
 
+const PAGE_SIZE = 1000;
+
+/**
+ * Lê todas as linhas de uma tabela paginando com .range() — sem isso, o PostgREST
+ * limita a resposta ao seu max-rows padrão (comumente 1000) e trunca silenciosamente
+ * tabelas maiores, sem erro, resultando em perda de dados na migração.
+ */
+async function fetchAllRows<T>(supabase: SupabaseClient, table: string): Promise<T[]> {
+  const rows: T[] = [];
+  let offset = 0;
+  for (;;) {
+    const { data, error } = await supabase.from(table).select("*").range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw new Error(`Erro ao ler ${table}: ${error.message}`);
+    if (!data || data.length === 0) break;
+    rows.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return rows;
+}
+
+interface SupabaseUserRow {
+  id: string;
+  email: string;
+  password_hash: string | null;
+  email_verified: string | null;
+  failed_login_attempts: number | null;
+  locked_until: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SupabaseProfileRow {
+  user_id: string;
+  unlock_password_hash: string;
+  unlock_password_salt: string;
+}
+
+interface SupabasePacienteRow {
+  id: string;
+  nome: string;
+  identificador: string;
+  user_id: string | null;
+}
+
+interface SupabaseConsultaRow {
+  id: string;
+  patient_id: string;
+  date: string;
+  clinico: unknown;
+  estrutura: unknown;
+  fase_indicada: string | number | null;
+  impressao_clinica: string | null;
+  comparacao: unknown;
+}
+
+interface SupabaseTokenRow {
+  token_hash: string;
+  user_id: string;
+  expires_at: string;
+  created_at: string;
+}
+
 async function main() {
   const supabase = createClient(supabaseUrl as string, supabaseKey as string, { auth: { persistSession: false } });
   await mongoose.connect(mongoUri as string);
 
-  const { data: users, error: usersError } = await supabase.from("users").select("*");
-  if (usersError) throw new Error(`Erro ao ler users: ${usersError.message}`);
+  const users = await fetchAllRows<SupabaseUserRow>(supabase, "users");
   const userIdMap = new Map<string, string>();
-  for (const u of users ?? []) {
+  for (const u of users) {
     const doc = await UserModel.create({
       email: u.email,
       password_hash: u.password_hash,
@@ -50,10 +112,9 @@ async function main() {
   }
   console.log(`users: ${userIdMap.size} migrados`);
 
-  const { data: profiles, error: profilesError } = await supabase.from("profiles").select("*");
-  if (profilesError) throw new Error(`Erro ao ler profiles: ${profilesError.message}`);
+  const profiles = await fetchAllRows<SupabaseProfileRow>(supabase, "profiles");
   let profilesCount = 0;
-  for (const p of profiles ?? []) {
+  for (const p of profiles) {
     const newUserId = userIdMap.get(p.user_id);
     if (!newUserId) continue;
     await ProfileModel.create({
@@ -65,21 +126,25 @@ async function main() {
   }
   console.log(`profiles: ${profilesCount} migrados`);
 
-  const { data: pacientes, error: pacientesError } = await supabase.from("pacientes").select("*");
-  if (pacientesError) throw new Error(`Erro ao ler pacientes: ${pacientesError.message}`);
-  for (const p of pacientes ?? []) {
+  const pacientes = await fetchAllRows<SupabasePacienteRow>(supabase, "pacientes");
+  let pacientesCount = 0;
+  for (const p of pacientes) {
+    // Mesmo critério de profiles/tokens: paciente com user_id que não existe mais
+    // (ou nunca existiu) é pulado, em vez de migrado com user_id nulo — evita criar
+    // um paciente "órfão" invisível ao filtro de multi-tenancy por usuário do app.
+    if (p.user_id && !userIdMap.get(p.user_id)) continue;
     await PacienteModel.create({
       _id: p.id,
       nome: p.nome,
       identificador: p.identificador,
       user_id: p.user_id ? (userIdMap.get(p.user_id) ?? null) : null,
     });
+    pacientesCount++;
   }
-  console.log(`pacientes: ${(pacientes ?? []).length} migrados`);
+  console.log(`pacientes: ${pacientesCount} migrados (${pacientes.length - pacientesCount} pulados por user_id órfão)`);
 
-  const { data: consultas, error: consultasError } = await supabase.from("consultas").select("*");
-  if (consultasError) throw new Error(`Erro ao ler consultas: ${consultasError.message}`);
-  for (const c of consultas ?? []) {
+  const consultas = await fetchAllRows<SupabaseConsultaRow>(supabase, "consultas");
+  for (const c of consultas) {
     await ConsultaModel.create({
       _id: c.id,
       patient_id: c.patient_id,
@@ -91,12 +156,11 @@ async function main() {
       comparacao: c.comparacao ?? null,
     });
   }
-  console.log(`consultas: ${(consultas ?? []).length} migrados`);
+  console.log(`consultas: ${consultas.length} migrados`);
 
-  const { data: prTokens, error: prTokensError } = await supabase.from("password_reset_tokens").select("*");
-  if (prTokensError) throw new Error(`Erro ao ler password_reset_tokens: ${prTokensError.message}`);
+  const prTokens = await fetchAllRows<SupabaseTokenRow>(supabase, "password_reset_tokens");
   let prCount = 0;
-  for (const t of prTokens ?? []) {
+  for (const t of prTokens) {
     const newUserId = userIdMap.get(t.user_id);
     if (!newUserId) continue;
     await PasswordResetTokenModel.create({
@@ -109,10 +173,9 @@ async function main() {
   }
   console.log(`password_reset_tokens: ${prCount} migrados`);
 
-  const { data: auTokens, error: auTokensError } = await supabase.from("account_unlock_tokens").select("*");
-  if (auTokensError) throw new Error(`Erro ao ler account_unlock_tokens: ${auTokensError.message}`);
+  const auTokens = await fetchAllRows<SupabaseTokenRow>(supabase, "account_unlock_tokens");
   let auCount = 0;
-  for (const t of auTokens ?? []) {
+  for (const t of auTokens) {
     const newUserId = userIdMap.get(t.user_id);
     if (!newUserId) continue;
     await AccountUnlockTokenModel.create({

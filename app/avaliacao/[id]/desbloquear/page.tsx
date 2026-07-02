@@ -18,7 +18,7 @@ export default async function DesbloquearPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ id: consultaId }, { error }, { uc, user, supabaseClient }] = await Promise.all([
+  const [{ id: consultaId }, { error }, { uc, user }] = await Promise.all([
     params,
     searchParams,
     getAuthenticatedUseCases(),
@@ -31,10 +31,10 @@ export default async function DesbloquearPage({
     redirect(`/avaliacao/${consultaId}/estrutura`);
   }
 
-  const useSupabase = process.env.PERSISTENCE === "supabase";
+  const useMongo = process.env.PERSISTENCE === "mongo";
   let senhaDefinida = true;
-  if (useSupabase) {
-    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
+  if (useMongo) {
+    const stored = await getUnlockPasswordHash(user.id);
     senhaDefinida = stored != null;
   }
 
@@ -44,7 +44,7 @@ export default async function DesbloquearPage({
     <div className="page-container flex min-h-[80vh] flex-col justify-center">
       <div className="content-width-medium flex flex-col gap-6">
         <ErrorToast error={error} />
-        {useSupabase && !senhaDefinida ? (
+        {useMongo && !senhaDefinida ? (
           <Card className="border-border/80 shadow-[var(--shadow-card)]">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">

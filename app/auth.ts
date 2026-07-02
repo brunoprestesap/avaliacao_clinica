@@ -2,9 +2,6 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import type { Session } from "next-auth";
 import { authOptions } from "@/app/auth-options";
-import { getSupabase } from "@/src/infrastructure/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/src/infrastructure/supabase/database.types";
 
 export type AuthUser = {
   id: string;
@@ -14,13 +11,12 @@ export type AuthUser = {
 export type SessionContext = {
   session: Session;
   user: AuthUser;
-  supabaseClient: SupabaseClient<Database>;
 };
 
 /**
  * Retorna o contexto de sessão autenticada com tipagem forte.
- * O isolamento entre usuários é feito via `userId` nos repositórios (ConsultaRepositorySupabase, PacienteRepositorySupabase),
- * não via RLS por JWT — o client Supabase no servidor é service role.
+ * O isolamento entre usuários é feito via `userId` nos repositórios (ConsultaRepositoryMongo, PacienteRepositoryMongo).
+ * Não há um "client de banco" por request no MongoDB — a conexão é global (src/infrastructure/mongo/connection.ts).
  */
 export async function getSessionContext(options?: {
   redirectIfUnauthenticated?: boolean;
@@ -41,22 +37,17 @@ export async function getSessionContext(options?: {
     return null;
   }
 
-  const supabaseClient = getSupabase();
-  return { session, user, supabaseClient };
+  return { session, user };
 }
 
 export async function getSession(options?: {
   redirectIfUnauthenticated?: boolean;
 }): Promise<{
-  supabase: SupabaseClient<Database> | null;
   user: AuthUser | null;
 }> {
   const ctx = await getSessionContext(options);
   if (!ctx) {
-    return { supabase: null, user: null };
+    return { user: null };
   }
-  return {
-    supabase: ctx.supabaseClient,
-    user: ctx.user,
-  };
+  return { user: ctx.user };
 }

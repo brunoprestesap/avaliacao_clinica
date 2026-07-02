@@ -18,11 +18,11 @@ export default async function ConfiguracoesPage({
   searchParams: Promise<{ error?: string; success?: string; next?: string }>;
 }) {
   const params = await searchParams;
-  const { user, supabaseClient } = await getAuthenticatedUseCases();
+  const { user } = await getAuthenticatedUseCases();
 
   let senhaDefinida = false;
-  if (process.env.PERSISTENCE === "supabase") {
-    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
+  if (process.env.PERSISTENCE === "mongo") {
+    const stored = await getUnlockPasswordHash(user.id);
     senhaDefinida = stored != null;
   }
 
@@ -52,7 +52,7 @@ export default async function ConfiguracoesPage({
             <CardDescription className="text-base text-muted-foreground mt-1">
               Usada na tela &quot;Equipe de Saúde&quot; após o paciente finalizar o preenchimento. Só você pode desbloquear para gerar o resultado.
             </CardDescription>
-            {process.env.PERSISTENCE === "supabase" && (
+            {process.env.PERSISTENCE === "mongo" && (
               <p className="text-sm text-muted-foreground mt-2">
                 Status: {senhaDefinida ? "Definida" : "Não definida"}
               </p>

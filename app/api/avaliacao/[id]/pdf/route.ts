@@ -36,7 +36,7 @@ export async function GET(
     );
   }
 
-  const uc = getAvaliacaoUseCases(ctx.supabaseClient, ctx.user.id);
+  const uc = getAvaliacaoUseCases(ctx.user.id);
   const resultado = await uc.obterResultadoParaExibicao(id);
   if (!resultado) {
     return NextResponse.json(

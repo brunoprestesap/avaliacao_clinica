@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AvaliacaoUseCases, ConsultaRepository, PacienteRepository } from "@/src/application/ports";
-import type { Database } from "./supabase/database.types";
 import {
   PAGINACAO_PACIENTES_DEFAULT_LIMIT,
   normalizarLimite,
@@ -8,9 +6,8 @@ import {
 } from "@/src/config/paginacao-pacientes";
 import { ConsultaRepositoryJson } from "./repositories/ConsultaRepositoryJson";
 import { PacienteRepositoryJson } from "./repositories/PacienteRepositoryJson";
-import { ConsultaRepositorySupabase } from "./repositories/ConsultaRepositorySupabase";
-import { PacienteRepositorySupabase } from "./repositories/PacienteRepositorySupabase";
-import { getSupabase } from "./supabase/server";
+import { ConsultaRepositoryMongo } from "./repositories/ConsultaRepositoryMongo";
+import { PacienteRepositoryMongo } from "./repositories/PacienteRepositoryMongo";
 import { createIdentificarPaciente } from "@/src/application/use-cases/IdentificarPaciente";
 import { createIniciarNovaConsulta } from "@/src/application/use-cases/IniciarNovaConsulta";
 import { createSalvarFormularioClinico } from "@/src/application/use-cases/SalvarFormularioClinico";
@@ -23,47 +20,27 @@ import { createObterResultadoParaExibicao } from "@/src/application/use-cases/Ob
 import { createExcluirAvaliacao } from "@/src/application/use-cases/ExcluirAvaliacao";
 import { createAtualizarPaciente } from "@/src/application/use-cases/AtualizarPaciente";
 
-const useSupabase = process.env.PERSISTENCE === "supabase";
+const useMongo = process.env.PERSISTENCE === "mongo";
 
 let consultaRepoFallback: ConsultaRepository | null = null;
 let pacienteRepoFallback: PacienteRepository | null = null;
 
-/**
- * Isolamento entre usuários: repositórios Supabase recebem userId e filtram por user_id.
- * O client passado deve ser o mesmo retornado por getSession()/getSessionContext() (service role).
- */
-function getConsultaRepository(
-  supabase?: SupabaseClient<Database>,
-  userId?: string
-): ConsultaRepository {
-  if (supabase) return new ConsultaRepositorySupabase(supabase, userId);
-  if (!consultaRepoFallback) {
-    consultaRepoFallback = useSupabase
-      ? new ConsultaRepositorySupabase(getSupabase(), undefined)
-      : new ConsultaRepositoryJson();
-  }
+/** Isolamento entre usuários: repositórios Mongo recebem userId e filtram por user_id. */
+function getConsultaRepository(userId?: string): ConsultaRepository {
+  if (useMongo) return new ConsultaRepositoryMongo(userId);
+  if (!consultaRepoFallback) consultaRepoFallback = new ConsultaRepositoryJson();
   return consultaRepoFallback;
 }
 
-function getPacienteRepository(
-  supabase?: SupabaseClient<Database>,
-  userId?: string
-): PacienteRepository {
-  if (supabase) return new PacienteRepositorySupabase(supabase, userId);
-  if (!pacienteRepoFallback) {
-    pacienteRepoFallback = useSupabase
-      ? new PacienteRepositorySupabase(getSupabase(), undefined)
-      : new PacienteRepositoryJson();
-  }
+function getPacienteRepository(userId?: string): PacienteRepository {
+  if (useMongo) return new PacienteRepositoryMongo(userId);
+  if (!pacienteRepoFallback) pacienteRepoFallback = new PacienteRepositoryJson();
   return pacienteRepoFallback;
 }
 
-export function createAvaliacaoUseCases(
-  supabase?: SupabaseClient<Database>,
-  userId?: string
-): AvaliacaoUseCases {
-  const consultaRepo = getConsultaRepository(supabase, userId);
-  const pacienteRepo = getPacienteRepository(supabase, userId);
+export function createAvaliacaoUseCases(userId?: string): AvaliacaoUseCases {
+  const consultaRepo = getConsultaRepository(userId);
+  const pacienteRepo = getPacienteRepository(userId);
   return {
     identificarPaciente: createIdentificarPaciente(pacienteRepo),
     iniciarNovaConsulta: createIniciarNovaConsulta(consultaRepo),

@@ -111,7 +111,7 @@ export async function iniciarAvaliacao(formData: FormData) {
     const { paciente } = await uc.identificarPaciente({
       nome,
       identificador,
-      userId: process.env.PERSISTENCE === "supabase" ? user.id : undefined,
+      userId: process.env.PERSISTENCE === "mongo" ? user.id : undefined,
     });
     const consultaId = await uc.iniciarNovaConsulta(paciente.id);
     redirect(pathAvaliacao(consultaId, "clinico"));
@@ -214,9 +214,9 @@ export async function desbloquearEquipeSaude(formData: FormData) {
     redirect("/avaliacao/nova?error=" + encodeURIComponent("Consulta não identificada."));
   }
 
-  const useSupabase = process.env.PERSISTENCE === "supabase";
-  if (useSupabase) {
-    const { uc, user, supabaseClient } = await getAuthenticatedUseCases();
+  const useMongo = process.env.PERSISTENCE === "mongo";
+  if (useMongo) {
+    const { uc, user } = await getAuthenticatedUseCases();
     const consulta = await uc.obterConsulta(consultaId);
     if (!consulta) {
       redirect("/avaliacao/nova");
@@ -224,7 +224,7 @@ export async function desbloquearEquipeSaude(formData: FormData) {
     if (!consulta.estrutura) {
       redirect(pathAvaliacao(consultaId, "bloqueado"));
     }
-    const stored = await getUnlockPasswordHash(supabaseClient, user.id);
+    const stored = await getUnlockPasswordHash(user.id);
     if (!stored) {
       const nextUrl = encodeURIComponent(pathAvaliacao(consultaId, "desbloquear"));
       redirect(`/configuracoes?error=${encodeURIComponent("Defina sua senha de desbloqueio primeiro.")}&next=${nextUrl}`);
@@ -244,7 +244,7 @@ export async function desbloquearEquipeSaude(formData: FormData) {
     redirect(pathAvaliacao(consultaId, "gerar"));
   }
 
-  // Fallback: modo JSON ou sem Supabase — senha global
+  // Fallback: modo JSON ou sem Mongo — senha global
   const senhaEsperada = process.env.SENHA_MEDICO ?? "";
   if (!senhaEsperada || senha !== senhaEsperada) {
     redirect(`${pathAvaliacao(consultaId, "desbloquear")}?error=` + encodeURIComponent("Senha incorreta."));
@@ -278,12 +278,12 @@ export async function definirSenhaDesbloqueio(formData: FormData) {
   if (senha !== confirmacao) {
     redirect("/configuracoes?error=" + encodeURIComponent("As senhas não coincidem."));
   }
-  const { supabaseClient, user } = await getAuthenticatedUseCases();
-  if (process.env.PERSISTENCE !== "supabase") {
-    redirect("/configuracoes?error=" + encodeURIComponent("Configuração disponível apenas com Supabase."));
+  const { user } = await getAuthenticatedUseCases();
+  if (process.env.PERSISTENCE !== "mongo") {
+    redirect("/configuracoes?error=" + encodeURIComponent("Configuração disponível apenas com MongoDB."));
   }
   try {
-    await setUnlockPassword(supabaseClient, user.id, senha);
+    await setUnlockPassword(user.id, senha);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     const msg = e instanceof Error ? e.message : "Erro ao salvar senha.";

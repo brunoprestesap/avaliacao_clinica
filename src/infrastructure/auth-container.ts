@@ -1,7 +1,6 @@
 import "server-only";
-import { getSupabase } from "@/src/infrastructure/supabase/server";
-import { UserRepositorySupabase } from "@/src/infrastructure/repositories/UserRepositorySupabase";
-import { AuthTokenRepositorySupabase } from "@/src/infrastructure/repositories/AuthTokenRepositorySupabase";
+import { UserRepositoryMongo } from "@/src/infrastructure/repositories/UserRepositoryMongo";
+import { AuthTokenRepositoryMongo } from "@/src/infrastructure/repositories/AuthTokenRepositoryMongo";
 import { createAuthService } from "@/src/application/auth/AuthService";
 import { authEmailSender } from "@/app/lib/email";
 
@@ -14,14 +13,13 @@ function getBaseUrl(): string {
 let authServiceInstance: ReturnType<typeof createAuthService> | null = null;
 
 /**
- * Retorna uma instância do AuthService construída com repositórios Supabase e o envio de email da app.
+ * Retorna uma instância do AuthService construída com repositórios Mongo e o envio de email da app.
  * Usado por auth-options e auth-actions.
  */
 export function getAuthService() {
   if (!authServiceInstance) {
-    const supabase = getSupabase();
-    const userRepo = new UserRepositorySupabase(supabase);
-    const tokenRepo = new AuthTokenRepositorySupabase(supabase);
+    const userRepo = new UserRepositoryMongo();
+    const tokenRepo = new AuthTokenRepositoryMongo();
     authServiceInstance = createAuthService(userRepo, tokenRepo, authEmailSender, {
       getBaseUrl,
     });

@@ -16,7 +16,7 @@
 - `npm run build` deve passar ao final da Task 6 e novamente ao final da Task 7.
 - Nomes de campos nos documentos Mongo espelham exatamente os nomes de coluna atuais do Postgres (snake_case) — sem renomear nada.
 - `fase_indicada` continua armazenado como string contendo o código numérico (`"1"`, `"2"`, `"4"`) ou o rótulo por extenso para documentos legados — mesmo comportamento de `ConsultaRepositorySupabase.ts`, preservado integralmente (ver Task 3).
-- O índice único composto de `pacientes` (`user_id` + `identificador`) usa `partialFilterExpression` para excluir documentos com `user_id` nulo — isso replica a semântica do Postgres, onde `NULL` nunca é considerado igual a outro `NULL` em uma constraint UNIQUE (o MongoDB, por padrão, trata múltiplos `null` como iguais e bloquearia o insert sem essa exclusão).
+- O índice único composto de `pacientes` (`user_id` + `identificador`) usa `partialFilterExpression: { user_id: { $type: "string" } }` para excluir documentos com `user_id` nulo/ausente — isso replica a semântica do Postgres, onde `NULL` nunca é considerado igual a outro `NULL` em uma constraint UNIQUE (o MongoDB, por padrão, trata múltiplos `null` como iguais e bloquearia o insert sem essa exclusão). Nota: `{ $exists: true, $ne: null }` (a forma mais intuitiva) **não é uma sintaxe válida** de partial index no MongoDB em nenhum ambiente — `$ne`/`$not` não são operadores suportados em `partialFilterExpression` (só `$eq`, `$exists: true`, `$gt/$gte/$lt/$lte`, `$type` e `$and` no topo). `$type: "string"` é a forma correta, já que `user_id` só assume `String` ou `null` neste schema.
 
 ---
 
@@ -168,7 +168,7 @@ const PacienteSchema = new Schema<PacienteDoc>(
 );
 PacienteSchema.index(
   { user_id: 1, identificador: 1 },
-  { unique: true, partialFilterExpression: { user_id: { $exists: true, $ne: null } } }
+  { unique: true, partialFilterExpression: { user_id: { $type: "string" } } }
 );
 
 export interface ConsultaDoc {

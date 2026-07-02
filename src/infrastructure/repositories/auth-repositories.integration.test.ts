@@ -1,46 +1,34 @@
-/**
- * Testes de integração para UserRepositorySupabase e AuthTokenRepositorySupabase.
- * Rodam apenas quando NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão definidos
- * (ex.: Supabase local com `npx supabase start` e .env.test).
- *
- * Executar com: INTEGRATION_SUPABASE=1 npm run test -- auth-repositories.integration
- */
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/src/infrastructure/supabase/database.types";
-import { UserRepositorySupabase } from "./UserRepositorySupabase";
-import { AuthTokenRepositorySupabase } from "./AuthTokenRepositorySupabase";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import { UserModel, PasswordResetTokenModel, AccountUnlockTokenModel } from "@/src/infrastructure/mongo/models";
+import { UserRepositoryMongo } from "./UserRepositoryMongo";
+import { AuthTokenRepositoryMongo } from "./AuthTokenRepositoryMongo";
 
-const runIntegration =
-  process.env.INTEGRATION_SUPABASE === "1" &&
-  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+let mongod: MongoMemoryServer;
 
-function createSupabase(): ReturnType<typeof createClient<Database>> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  return createClient<Database>(url, key, { auth: { persistSession: false } });
-}
+beforeAll(async () => {
+  mongod = await MongoMemoryServer.create();
+  await mongoose.connect(mongod.getUri());
+});
 
-describe.skipIf(!runIntegration)("UserRepositorySupabase (integration)", () => {
-  let supabase: ReturnType<typeof createSupabase>;
-  let repo: UserRepositorySupabase;
-  const testEmail = `integration-${Date.now()}@test.local`;
+afterEach(async () => {
+  await UserModel.deleteMany({});
+  await PasswordResetTokenModel.deleteMany({});
+  await AccountUnlockTokenModel.deleteMany({});
+});
 
-  beforeAll(() => {
-    supabase = createSupabase();
-    repo = new UserRepositorySupabase(supabase);
-  });
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongod.stop();
+});
 
-  afterAll(async () => {
-    await supabase.from("users").delete().eq("email", testEmail);
-  });
+describe("UserRepositoryMongo", () => {
+  const repo = new UserRepositoryMongo();
+  const testEmail = "integration@test.local";
 
   it("insert e findByEmail retornam o usuário", async () => {
-    await repo.insert({
-      email: testEmail,
-      password_hash: "hash",
-    });
+    await repo.insert({ email: testEmail, password_hash: "hash" });
     const user = await repo.findByEmail(testEmail);
     expect(user).not.toBeNull();
     expect(user!.email).toBe(testEmail);
@@ -49,13 +37,20 @@ describe.skipIf(!runIntegration)("UserRepositorySupabase (integration)", () => {
   });
 
   it("findById retorna o mesmo usuário", async () => {
+    await repo.insert({ email: testEmail, password_hash: "hash" });
     const byEmail = await repo.findByEmail(testEmail);
     expect(byEmail).not.toBeNull();
     const byId = await repo.findById(byEmail!.id);
     expect(byId).toEqual(byEmail);
   });
 
+  it("findById retorna null para id malformado (não é um ObjectId válido)", async () => {
+    const result = await repo.findById("id-invalido");
+    expect(result).toBeNull();
+  });
+
   it("updateFailedLogin e resetFailedLogin alteram estado", async () => {
+    await repo.insert({ email: testEmail, password_hash: "hash" });
     const user = await repo.findByEmail(testEmail);
     expect(user).not.toBeNull();
     const lockedUntil = new Date(Date.now() + 3600000).toISOString();
@@ -70,23 +65,13 @@ describe.skipIf(!runIntegration)("UserRepositorySupabase (integration)", () => {
   });
 });
 
-describe.skipIf(!runIntegration)("AuthTokenRepositorySupabase (integration)", () => {
-  let supabase: ReturnType<typeof createSupabase>;
-  let repo: AuthTokenRepositorySupabase;
+describe("AuthTokenRepositoryMongo", () => {
+  const repo = new AuthTokenRepositoryMongo();
   let userId: string;
 
   beforeAll(async () => {
-    supabase = createSupabase();
-    repo = new AuthTokenRepositorySupabase(supabase);
-    const testEmail = `token-${Date.now()}@test.local`;
-    const { data } = await supabase.from("users").insert({ email: testEmail, password_hash: null } as never).select("id").single();
-    userId = (data as { id: string }).id;
-  });
-
-  afterAll(async () => {
-    await supabase.from("password_reset_tokens").delete().eq("user_id", userId);
-    await supabase.from("account_unlock_tokens").delete().eq("user_id", userId);
-    await supabase.from("users").delete().eq("id", userId);
+    const user = await UserModel.create({ email: "token@test.local", password_hash: null });
+    userId = String(user._id);
   });
 
   it("createPasswordResetToken e findPasswordResetTokenById", async () => {
@@ -112,5 +97,10 @@ describe.skipIf(!runIntegration)("AuthTokenRepositorySupabase (integration)", ()
     await repo.deleteAccountUnlockToken(id);
     const afterDelete = await repo.findAccountUnlockTokenById(id);
     expect(afterDelete).toBeNull();
+  });
+
+  it("findPasswordResetTokenById retorna null para id malformado", async () => {
+    const result = await repo.findPasswordResetTokenById("id-invalido");
+    expect(result).toBeNull();
   });
 });

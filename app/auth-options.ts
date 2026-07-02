@@ -20,10 +20,18 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         const authService = getAuthService();
-        const result = await authService.validateUserCredentials({
-          email: credentials.email,
-          password: credentials.password,
-        });
+        let result;
+        try {
+          result = await authService.validateUserCredentials({
+            email: credentials.email,
+            password: credentials.password,
+          });
+        } catch (e) {
+          // Erro de infraestrutura (ex.: banco indisponível) não deve vazar detalhe
+          // técnico para o usuário final via toast — só uma mensagem genérica.
+          console.error("[auth] Erro inesperado ao validar credenciais:", e);
+          throw new Error("Não foi possível entrar agora. Tente novamente em instantes.");
+        }
         if (result.success) {
           return { id: result.user.id, email: result.user.email };
         }

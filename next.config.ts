@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Build enxuto para Docker: copia só o necessário para rodar (sem devDependencies).
+  output: "standalone",
   // Vercel React Best Practices – bundle: imports de barrel viram imports diretos.
   // lucide-react e radix-ui: evita carregar milhares de re-exports (200–800ms por cold start).
   experimental: {

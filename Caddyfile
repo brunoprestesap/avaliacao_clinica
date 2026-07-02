@@ -1,0 +1,13 @@
+# Sem domínio ainda: serve por HTTP puro no IP da VPS (ex: http://203.0.113.10).
+# Sem certificado TLS confiável nesse modo — use apenas para validar a migração.
+:80 {
+	reverse_proxy app:3000
+	encode gzip zstd
+}
+
+# Quando registrar um domínio (ou usar algo como <ip>.sslip.io), comente o bloco
+# acima e descomente este — o Caddy emite e renova o certificado Let's Encrypt sozinho:
+# seudominio.com {
+# 	reverse_proxy app:3000
+# 	encode gzip zstd
+# }
